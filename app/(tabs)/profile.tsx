@@ -150,8 +150,8 @@ router.replace("/roadmap");
 
         <View style={styles.pickerWrapper}>
           <Picker
-            selectedValue={school}
-            onValueChange={(val) => setSchool(val)}
+            selectedValue={school ?? ""}
+            onValueChange={(val) => setSchool(String(val ?? ""))}
             mode={Platform.OS === "ios" ? "dialog" : "dropdown"}
             style={styles.picker}
           >
