@@ -21,7 +21,7 @@ const MODULES = [
   },
 ];
 
-function RoadmapScreen() {
+export default function RoadmapScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -143,6 +143,3 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 });
-
-
-export default RoadmapScreen;
