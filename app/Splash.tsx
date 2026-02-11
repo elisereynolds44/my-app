@@ -8,7 +8,7 @@ const TAGLINE = "learn it gently";
 const INVEST_SPEED = 220;   // slower typing for "invest"
 const ISH_SPEED = 240;      // even slower for "-ish" (feels deliberate)
 const TAGLINE_SPEED = 120;  // gentle, readable tagline
-const PAUSE_BEFORE_ISH = 1500; // 1 full second dramatic pause
+const PAUSE_BEFORE_ISH = 1500; // dramatic pause before finishing the title
 
 const PAUSE_BEFORE_TAGLINE = 500;
 const SPLASH_TOTAL_TIME = 10000;
@@ -86,7 +86,7 @@ export default function Splash({ onDone }: { onDone: () => void }) {
   useEffect(() => {
     const done = setTimeout(onDone, SPLASH_TOTAL_TIME);
     return () => clearTimeout(done);
-  }, []);
+  }, [onDone]);
 
   return (
     <View style={styles.container}>
