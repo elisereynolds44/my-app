@@ -24,7 +24,7 @@ const SOFT_RED = "#F87171";
 
 export default function ProfileSetupScreen() {
   // Form state
-  const [school, setSchool] = useState<string | null>(null);
+  const [school, setSchool] = useState("");
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -34,7 +34,7 @@ export default function ProfileSetupScreen() {
   // Minimal starter list (keep it light for Sprint 0)
   const schools = useMemo(
     () => [
-      { label: "Select your school…", value: null },
+      { label: "Select your school…", value: "" },
       { label: "Westmont College", value: "westmont" },
       { label: "UCLA", value: "ucla" },
       { label: "University of Texas at Austin", value: "ut-austin" },
@@ -50,8 +50,8 @@ export default function ProfileSetupScreen() {
   }, [email]);
 
   // Gating
-  const canEnterEmail = !!school;
-  const canEnterDetails = !!school && emailIsEdu;
+  const canEnterEmail = school !== "";
+  const canEnterDetails = school !== "" && emailIsEdu;
 
   // Progress (Step 1–3)
   const currentStep = useMemo(() => {
@@ -114,7 +114,7 @@ export default function ProfileSetupScreen() {
   });
 
 function saveProfile() {
-  if (!school) {
+  if (school === "") {
     Alert.alert("Select your school first.");
     return;
   }
