@@ -13,32 +13,32 @@ export default function HomeScreen() {
 
   const opacity = useRef(new Animated.Value(1)).current;
 
-  // Typewriter
+  // ⭐ slower typewriter for cinematic feel
   useEffect(() => {
     let i = 0;
     const id = setInterval(() => {
       i += 1;
       setTyped(full.slice(0, i));
       if (i >= full.length) clearInterval(id);
-    }, 90);
+    }, 140); // <-- slower (was ~90)
 
     return () => clearInterval(id);
   }, []);
 
-  // After typing finishes -> wait -> dissolve -> go to welcome
+  // ⭐ longer pause before dissolve → welcome
   useEffect(() => {
     if (typed !== full) return;
 
     const wait = setTimeout(() => {
       Animated.timing(opacity, {
         toValue: 0,
-        duration: 420,
+        duration: 480,
         useNativeDriver: true,
       }).start(({ finished }) => {
         if (!finished) return;
         router.replace("/welcome");
       });
-    }, 900);
+    }, 1600); // <-- longer hold after typing
 
     return () => clearTimeout(wait);
   }, [typed, full, opacity]);
@@ -50,8 +50,10 @@ export default function HomeScreen() {
           <Text style={styles.badgeText}>ALPHA</Text>
         </View>
 
-        <Text style={styles.title}>{typed}</Text>
-        <Text style={styles.cursor}>{typed.length < full.length ? "▍" : ""}</Text>
+        <Text style={styles.title}>
+          {typed}
+          {typed.length < full.length ? "▍" : ""}
+        </Text>
       </Animated.View>
     </SafeAreaView>
   );
@@ -59,6 +61,7 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: NAVY, paddingHorizontal: 20 },
+
   center: { flex: 1, justifyContent: "center" },
 
   badge: {
@@ -73,6 +76,10 @@ const styles = StyleSheet.create({
   },
   badgeText: { color: GREEN, fontWeight: "900", fontSize: 12, letterSpacing: 0.6 },
 
-  title: { color: WHITE, fontSize: 48, fontWeight: "900", letterSpacing: 0.2 },
-  cursor: { color: "rgba(255,255,255,0.85)", fontSize: 34, marginTop: -6 },
+  title: {
+    color: WHITE,
+    fontSize: 48,
+    fontWeight: "900",
+    letterSpacing: 0.2,
+  },
 });
