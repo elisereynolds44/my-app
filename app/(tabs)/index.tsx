@@ -26,44 +26,40 @@ export default function HomeScreen() {
   const [idx, setIdx] = useState(0);
   const fade = useRef(new Animated.Value(1)).current;
 
-useEffect(() => {
-  let isActive = true;
+  useEffect(() => {
+    let isActive = true;
 
-  const run = () => {
-    // fade out
-    Animated.timing(fade, {
-      toValue: 0,
-      duration: 280,
-      useNativeDriver: true,
-    }).start(({ finished }) => {
-      if (!finished || !isActive) return;
-
-      // swap word while invisible
-      setIdx((prev) => (prev + 1) % brands.length);
-
-      // fade back in
+    const run = () => {
       Animated.timing(fade, {
-        toValue: 1,
-        duration: 420,
+        toValue: 0,
+        duration: 280,
         useNativeDriver: true,
-      }).start(({ finished: finishedIn }) => {
-        if (!finishedIn || !isActive) return;
+      }).start(({ finished }) => {
+        if (!finished || !isActive) return;
 
-        // wait a bit then repeat
-        setTimeout(() => {
-          if (isActive) run();
-        }, 1700);
+        setIdx((prev) => (prev + 1) % brands.length);
+
+        Animated.timing(fade, {
+          toValue: 1,
+          duration: 420,
+          useNativeDriver: true,
+        }).start(({ finished: finishedIn }) => {
+          if (!finishedIn || !isActive) return;
+
+          setTimeout(() => {
+            if (isActive) run();
+          }, 1700);
+        });
       });
-    });
-  };
+    };
 
-  run();
+    run();
 
-  return () => {
-    isActive = false;
-    fade.stopAnimation();
-  };
-}, [brands.length, fade]);
+    return () => {
+      isActive = false;
+      fade.stopAnimation();
+    };
+  }, [brands.length, fade]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -74,15 +70,9 @@ useEffect(() => {
             <Text style={styles.badgeText}>ALPHA</Text>
           </View>
 
-          <Text style={styles.brand}>HOME INDEX FILE</Text>
-          <Text style={styles.tagline}>
-            Learn investing by doing the next right step.
-          </Text>
+          {/* Title (slightly longer/wider) */}
+          <Text style={styles.brand}>Invest-ish</Text>
         </View>
-
-        <Text style={{ color: "white", marginTop: 8 }}>
-  DEBUG: Home mounted ✅ {new Date().toLocaleTimeString()}
-</Text>
 
         {/* MIDDLE HERO */}
         <View style={styles.middle}>
@@ -111,7 +101,7 @@ useEffect(() => {
             <TouchableOpacity
               activeOpacity={0.9}
               style={styles.primary}
-              onPress={() => router.push("/profile")}
+              onPress={() => router.push("/welcome")}
             >
               <Text style={styles.primaryText}>Get started</Text>
             </TouchableOpacity>
@@ -172,17 +162,9 @@ const styles = StyleSheet.create({
 
   brand: {
     color: WHITE,
-    fontSize: 40,
+    fontSize: 44,       // a wee bit longer
     fontWeight: "900",
-    letterSpacing: -0.6,
-  },
-
-  tagline: {
-    color: MUTED,
-    fontSize: 15,
-    lineHeight: 20,
-    maxWidth: 360,
-    marginTop: 8,
+    letterSpacing: 0.2, // makes it feel wider
   },
 
   middle: {

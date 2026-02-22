@@ -6,6 +6,13 @@ export default function TabsLayout() {
   return (
     <Tabs screenOptions={{ headerShown: false }}>
       <Tabs.Screen name="index" options={{ title: "Home" }} />
+
+      {/* onboarding screen (exists but not visible in tabs) */}
+      <Tabs.Screen
+        name="welcome"
+        options={{ href: null }}
+      />
+
       <Tabs.Screen name="profile" options={{ title: "Profile" }} />
       <Tabs.Screen name="roadmap" options={{ title: "Roadmap" }} />
     </Tabs>
