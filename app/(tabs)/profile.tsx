@@ -1,19 +1,26 @@
-import { Picker } from "@react-native-picker/picker";
+// app/(tabs)/profile.tsx
 import { router } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-    Alert,
-    Animated,
-    Platform,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  Animated,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { SchoolAutocomplete } from "../../components/SchoolAutocomplete";
 
 type Knowledge = "Beginner" | "Intermediate" | "Advanced";
+
+type SelectedSchool = {
+  id: number;
+  name: string;
+  city?: string;
+  state?: string;
+};
 
 const NAVY = "#0F172A";
 const WHITE = "#FFFFFF";
@@ -22,50 +29,37 @@ const MUTED = "#CBD5E1";
 const BORDER = "#E2E8F0";
 const SOFT_RED = "#F87171";
 
+const SCORECARD_API_KEY = "5ub2ffiUSYlz3NhaHvpMRgwYWilIJlyH0yrf5fe3";
+
 export default function ProfileSetupScreen() {
-  // Form state
-  const [school, setSchool] = useState("");
+  // ✅ FIXED FORM STATE
+  const [selectedSchool, setSelectedSchool] = useState<SelectedSchool | null>(null);
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [age, setAge] = useState("");
   const [knowledge, setKnowledge] = useState<Knowledge>("Beginner");
 
-  // Minimal starter list (keep it light for Sprint 0)
-  const schools = useMemo(
-    () => [
-      { label: "Select your school…", value: "" },
-      { label: "Westmont College", value: "westmont" },
-      { label: "UCLA", value: "ucla" },
-      { label: "University of Texas at Austin", value: "ut-austin" },
-      { label: "Stanford University", value: "stanford" },
-      { label: "Other (search coming soon)", value: "other" },
-    ],
-    []
-  );
-
   const emailIsEdu = useMemo(() => {
     const trimmed = email.trim().toLowerCase();
     return /^[^\s@]+@[^\s@]+\.edu$/.test(trimmed);
   }, [email]);
 
-  // Gating
-  const canEnterEmail = school !== "";
-  const canEnterDetails = school !== "" && emailIsEdu;
+  // ✅ FIXED GATING
+  const canEnterEmail = !!selectedSchool;
+  const canEnterDetails = !!selectedSchool && emailIsEdu;
 
-  // Progress (Step 1–3)
   const currentStep = useMemo(() => {
-    if (!school) return 1;
+    if (!selectedSchool) return 1;
     if (!emailIsEdu) return 2;
     return 3;
-  }, [school, emailIsEdu]);
+  }, [selectedSchool, emailIsEdu]);
 
   // ---------------- Animations ----------------
-  const step1Anim = useRef(new Animated.Value(0)).current; // mount entrance
-  const step2Anim = useRef(new Animated.Value(0)).current; // unlock entrance
-  const step3Anim = useRef(new Animated.Value(0)).current; // unlock entrance
+  const step1Anim = useRef(new Animated.Value(0)).current;
+  const step2Anim = useRef(new Animated.Value(0)).current;
+  const step3Anim = useRef(new Animated.Value(0)).current;
 
-  // Mount: show step 1 nicely
   useEffect(() => {
     Animated.timing(step1Anim, {
       toValue: 1,
@@ -74,7 +68,6 @@ export default function ProfileSetupScreen() {
     }).start();
   }, [step1Anim]);
 
-  // Unlock step 2 when school selected
   useEffect(() => {
     if (canEnterEmail) {
       Animated.timing(step2Anim, {
@@ -87,7 +80,6 @@ export default function ProfileSetupScreen() {
     }
   }, [canEnterEmail, step2Anim]);
 
-  // Unlock step 3 when edu email valid
   useEffect(() => {
     if (canEnterDetails) {
       Animated.timing(step3Anim, {
@@ -100,7 +92,6 @@ export default function ProfileSetupScreen() {
     }
   }, [canEnterDetails, step3Anim]);
 
-  // Helpers to turn an Animated.Value into “slide up + fade”
   const slideFade = (anim: Animated.Value, yFrom = 10) => ({
     opacity: anim,
     transform: [
@@ -113,28 +104,37 @@ export default function ProfileSetupScreen() {
     ],
   });
 
-function saveProfile() {
-  if (school === "") {
-    Alert.alert("Select your school first.");
-    return;
-  }
-  if (!emailIsEdu) {
-    Alert.alert("Please enter a valid .edu email.");
-    return;
-  }
-  if (!firstName.trim() || !lastName.trim()) {
-    Alert.alert("Please enter your first and last name.");
-    return;
-  }
+  function saveProfile() {
+    if (!selectedSchool) {
+      Alert.alert("Select your school first.");
+      return;
+    }
+    if (!emailIsEdu) {
+      Alert.alert("Please enter a valid .edu email.");
+      return;
+    }
+    if (!firstName.trim() || !lastName.trim()) {
+      Alert.alert("Please enter your first and last name.");
+      return;
+    }
 
-  const ageNum = Number(age);
-  if (!age.trim() || Number.isNaN(ageNum)) {
-    Alert.alert("Please enter a valid age.");
-    return;
-  }
+    const ageNum = Number(age);
+    if (!age.trim() || Number.isNaN(ageNum)) {
+      Alert.alert("Please enter a valid age.");
+      return;
+    }
 
-router.replace("/roadmap");
-}
+    router.replace({
+      pathname: "/roadmap",
+      params: {
+        firstName: firstName.trim(),
+        school: selectedSchool.name,
+        knowledge,
+        age: age.trim(),
+        email: email.trim(),
+      },
+    });
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -148,26 +148,23 @@ router.replace("/roadmap");
         <Text style={styles.stepLabel}>Step 1 of 3</Text>
         <Text style={styles.sectionTitle}>Select your school</Text>
 
-        <View style={styles.pickerWrapper}>
-          <Picker
-            selectedValue={school}
-            onValueChange={(val) => setSchool(val)}
-            mode={Platform.OS === "ios" ? "dialog" : "dropdown"}
-            style={styles.picker}
-          >
-            {schools.map((s) => (
-              <Picker.Item
-                key={String(s.value)}
-                label={s.label}
-                value={s.value}
-              />
-            ))}
-          </Picker>
+        <View style={{ marginTop: 10 }}>
+          <SchoolAutocomplete
+            apiKey={SCORECARD_API_KEY}
+            value={selectedSchool}
+            onSelect={(s) => setSelectedSchool(s)}
+          />
         </View>
+
+        {!!selectedSchool && (
+          <Text style={styles.selectedHint}>
+            Selected: {selectedSchool.name}
+            {selectedSchool.state ? `, ${selectedSchool.state}` : ""}
+          </Text>
+        )}
       </Animated.View>
 
       {/* Step 2 */}
-      {/* Keep it visible but “locked” until Step 1 done, then animate it in */}
       <Animated.View
         style={[
           styles.card,
@@ -176,9 +173,6 @@ router.replace("/roadmap");
       >
         <Text style={styles.stepLabel}>Step 2 of 3</Text>
         <Text style={styles.sectionTitle}>School email</Text>
-        <Text style={styles.helper}>
-          Must end in <Text style={styles.bold}>.edu</Text>
-        </Text>
 
         <TextInput
           value={email}
@@ -193,7 +187,7 @@ router.replace("/roadmap");
 
         {!!email.trim() && (
           <Text style={[styles.validation, emailIsEdu ? styles.ok : styles.bad]}>
-            {emailIsEdu ? "Looks good ✅" : "Needs to end in .edu"}
+            {emailIsEdu ? "Looks good" : "Needs to end in .edu"}
           </Text>
         )}
       </Animated.View>
@@ -245,36 +239,32 @@ router.replace("/roadmap");
           editable={canEnterDetails}
         />
 
-        <Text style={[styles.label, { marginTop: 12 }]}>
-          Previous knowledge
-        </Text>
+        <Text style={[styles.label, { marginTop: 12 }]}>Previous knowledge</Text>
         <View style={styles.knowledgeRow}>
-          {(["Beginner", "Intermediate", "Advanced"] as Knowledge[]).map(
-            (level) => {
-              const selected = knowledge === level;
-              return (
-                <TouchableOpacity
-                  key={level}
-                  onPress={() => setKnowledge(level)}
-                  disabled={!canEnterDetails}
+          {(["Beginner", "Intermediate", "Advanced"] as Knowledge[]).map((level) => {
+            const selected = knowledge === level;
+            return (
+              <TouchableOpacity
+                key={level}
+                onPress={() => setKnowledge(level)}
+                disabled={!canEnterDetails}
+                style={[
+                  styles.knowledgeButton,
+                  selected && styles.knowledgeButtonSelected,
+                  !canEnterDetails && styles.buttonDisabled,
+                ]}
+              >
+                <Text
                   style={[
-                    styles.knowledgeButton,
-                    selected && styles.knowledgeButtonSelected,
-                    !canEnterDetails && styles.buttonDisabled,
+                    styles.knowledgeText,
+                    selected && styles.knowledgeTextSelected,
                   ]}
                 >
-                  <Text
-                    style={[
-                      styles.knowledgeText,
-                      selected && styles.knowledgeTextSelected,
-                    ]}
-                  >
-                    {level}
-                  </Text>
-                </TouchableOpacity>
-              );
-            }
-          )}
+                  {level}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         <TouchableOpacity
@@ -289,6 +279,8 @@ router.replace("/roadmap");
   );
 }
 
+/* ---------- Progress dots ---------- */
+
 function ProgressDots({
   currentStep,
   totalSteps,
@@ -297,7 +289,7 @@ function ProgressDots({
   totalSteps: number;
 }) {
   return (
-    <View style={styles.dotsRow} accessibilityLabel={`Step ${currentStep} of ${totalSteps}`}>
+    <View style={styles.dotsRow}>
       {Array.from({ length: totalSteps }).map((_, i) => {
         const stepNum = i + 1;
         const isActive = stepNum === currentStep;
@@ -318,53 +310,24 @@ function ProgressDots({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: NAVY,
-    padding: 20,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "800",
-    color: WHITE,
-    marginBottom: 6,
-  },
-  subtitle: {
-    color: MUTED,
-    marginBottom: 14,
-    fontSize: 14,
-    lineHeight: 18,
-  },
+/* ---------- Styles ---------- */
 
-  dotsRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginBottom: 16,
-  },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.25)",
-  },
-  dotActive: {
-    backgroundColor: GREEN,
-  },
-  dotComplete: {
-    backgroundColor: "rgba(126,214,165,0.6)",
-  },
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: NAVY, padding: 20 },
+
+  title: { fontSize: 28, fontWeight: "800", color: WHITE, marginBottom: 6 },
+  subtitle: { color: MUTED, marginBottom: 14, fontSize: 14, lineHeight: 18 },
+
+  dotsRow: { flexDirection: "row", gap: 8, marginBottom: 16 },
+  dot: { width: 10, height: 10, borderRadius: 999, backgroundColor: "rgba(255,255,255,0.25)" },
+  dotActive: { backgroundColor: GREEN },
+  dotComplete: { backgroundColor: "rgba(126,214,165,0.6)" },
 
   card: {
     backgroundColor: WHITE,
     borderRadius: 14,
     padding: 16,
     marginBottom: 14,
-    shadowColor: "#000",
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
   },
 
   stepLabel: {
@@ -375,40 +338,11 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
     textTransform: "uppercase",
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: NAVY,
-    marginBottom: 8,
-  },
-  helper: {
-    fontSize: 13,
-    color: "#64748B",
-    marginBottom: 8,
-  },
-  bold: {
-    fontWeight: "900",
-    color: NAVY,
-  },
+  sectionTitle: { fontSize: 16, fontWeight: "800", color: NAVY, marginBottom: 8 },
 
-  pickerWrapper: {
-    borderWidth: 1,
-    borderColor: BORDER,
-    borderRadius: 10,
-    overflow: "hidden",
-    backgroundColor: WHITE,
-  },
-  picker: {
-    height: 48,
-    width: "100%",
-  },
+  selectedHint: { marginTop: 10, fontSize: 12, fontWeight: "700", color: "#334155" },
 
-  label: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#334155",
-    marginBottom: 6,
-  },
+  label: { fontSize: 13, fontWeight: "700", color: "#334155", marginBottom: 6 },
   input: {
     borderWidth: 1,
     borderColor: BORDER,
@@ -419,36 +353,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: NAVY,
   },
-  inputDisabled: {
-    backgroundColor: "#F1F5F9",
-  },
+  inputDisabled: { backgroundColor: "#F1F5F9" },
 
-  validation: {
-    marginTop: 8,
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  ok: {
-    color: "#16A34A",
-  },
-  bad: {
-    color: SOFT_RED,
-  },
+  validation: { marginTop: 8, fontSize: 13, fontWeight: "700" },
+  ok: { color: "#16A34A" },
+  bad: { color: SOFT_RED },
 
-  row: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  half: {
-    flex: 1,
-  },
+  row: { flexDirection: "row", gap: 12 },
+  half: { flex: 1 },
 
-  knowledgeRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginTop: 6,
-    marginBottom: 14,
-  },
+  knowledgeRow: { flexDirection: "row", gap: 8, marginTop: 6, marginBottom: 14 },
   knowledgeButton: {
     flex: 1,
     paddingVertical: 10,
@@ -456,16 +370,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#E2E8F0",
     alignItems: "center",
   },
-  knowledgeButtonSelected: {
-    backgroundColor: NAVY,
-  },
-  knowledgeText: {
-    fontWeight: "900",
-    color: NAVY,
-  },
-  knowledgeTextSelected: {
-    color: WHITE,
-  },
+  knowledgeButtonSelected: { backgroundColor: NAVY },
+  knowledgeText: { fontWeight: "900", color: NAVY },
+  knowledgeTextSelected: { color: WHITE },
 
   saveButton: {
     backgroundColor: NAVY,
@@ -473,12 +380,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
   },
-  saveButtonText: {
-    color: WHITE,
-    fontWeight: "900",
-    fontSize: 16,
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
+  saveButtonText: { color: WHITE, fontWeight: "900", fontSize: 16 },
+  buttonDisabled: { opacity: 0.5 },
 });
