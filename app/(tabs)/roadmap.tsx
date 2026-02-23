@@ -6,18 +6,64 @@ const NAVY = "#0F172A";
 const WHITE = "#FFFFFF";
 const MUTED = "#CBD5E1";
 
+/**
+ * 🔓 Which module is unlocked up to
+ * 0 = only first
+ * 1 = first two
+ * etc
+ */
+const unlockedIndex = 0;
+
 const MODULES = [
   {
     id: "lesson-1",
-    title: "Module 1: The calm intro",
-    description: "A short warm-up to get comfortable before we go deeper.",
-    status: "Ready",
+    title: "Module 1: Foundations",
+    description: "Stocks, money, and what investing actually means.",
   },
   {
-    id: "coming-soon",
-    title: "Module 2: Your first strategy",
-    description: "Coming next: a practical lesson you can use immediately.",
-    status: "Locked",
+    id: "lesson-2",
+    title: "Module 2: Markets & movements",
+    description: "Why prices change, and why it’s not random.",
+  },
+  {
+    id: "lesson-3",
+    title: "Module 3: Risk & reality",
+    description: "How things go wrong, and how people manage that.",
+  },
+  {
+    id: "lesson-4",
+    title: "Module 4: Your first strategy",
+    description: "Making choices that actually fit you.",
+  },
+  {
+    id: "lesson-5",
+    title: "Module 5: ETFs & diversification",
+    description: "The simplest way to not bet everything on one stock.",
+  },
+  {
+    id: "lesson-6",
+    title: "Module 6: Time horizon",
+    description: "When you need the money changes everything.",
+  },
+  {
+    id: "lesson-7",
+    title: "Module 7: Tax basics",
+    description: "The stuff nobody explains until it hurts.",
+  },
+  {
+    id: "lesson-8",
+    title: "Module 8: Roth IRA & 401(k)",
+    description: "Future-you accounts and how they work.",
+  },
+  {
+    id: "lesson-9",
+    title: "Module 9: Starter portfolio",
+    description: "A simple structure you can understand and explain.",
+  },
+  {
+    id: "lesson-10",
+    title: "Module 10: Staying consistent",
+    description: "Habits that beat hype, even when markets are weird.",
   },
 ];
 
@@ -26,17 +72,19 @@ export default function RoadmapScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>Your learning roadmap</Text>
-        <Text style={styles.subtitle}>Start with Module 1. New modules unlock as you progress.</Text>
+        <Text style={styles.subtitle}>
+          Start with Module 1. New modules unlock as you progress.
+        </Text>
 
-        {MODULES.map((module) => {
-          const isReady = module.id === "lesson-1";
+        {MODULES.map((module, i) => {
+          const isReady = i <= unlockedIndex;
 
           return (
             <View key={module.id} style={styles.card}>
               <View style={styles.cardHeader}>
                 <Text style={styles.cardTitle}>{module.title}</Text>
                 <Text style={[styles.badge, isReady ? styles.badgeReady : styles.badgeLocked]}>
-                  {module.status}
+                  {isReady ? "Ready" : "Locked"}
                 </Text>
               </View>
 
@@ -46,13 +94,14 @@ export default function RoadmapScreen() {
                 <TouchableOpacity
                   accessibilityRole="button"
                   style={styles.button}
-                  onPress={() => router.push("/lesson-1")}
-                >
+onPress={() => router.push("/lesson-1")}                >
                   <Text style={styles.buttonText}>Start module</Text>
                 </TouchableOpacity>
               ) : (
                 <View style={styles.lockedButton}>
-                  <Text style={styles.lockedButtonText}>Unlock by finishing Module 1</Text>
+                  <Text style={styles.lockedButtonText}>
+                    Unlock by finishing previous module
+                  </Text>
                 </View>
               )}
             </View>

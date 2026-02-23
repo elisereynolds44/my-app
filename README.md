@@ -1,50 +1,106 @@
-# Welcome to your Expo app 👋
+# Invest-ish  
+A personal finance learning app for college students
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Invest-ish is an educational mobile app designed to help college students build clean, confident mental models around investing through familiar brands, structured learning modules, and guided onboarding.
 
-## Get started
+Instead of overwhelming users with financial jargon, Invest-ish begins with companies students already know and gradually introduces investing concepts in an approachable, interactive way.
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+## Alpha milestone
 
-2. Start the app
+The Alpha release focuses on validating the core experience flow, onboarding clarity, and learning navigation.
 
-   ```bash
-   npx expo start
-   ```
+### Onboarding experience
+- Animated splash screen with typewriter branding 
+- Welcome screen with progressive typewriter introduction
+- Brand familiarity carousel (Apple, Nike, Spotify, etc.)
+- Delayed call-to-action reveal for smoother onboarding pacing
+- Skip onboarding capability
 
-In the output, you'll find options to open the app in a
+### Home experience
+- Brand exploration prompt (“What would you invest in?”)
+- Rotating brand bubble animation
+- Primary navigation to onboarding and roadmap
+- Early product tone and learning positioning
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### Learning roadmap
+- Structured module progression system
+- Locked vs unlocked module states
+- Visual learning path to reinforce progress
+- Module entry routing architecture
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### Profile creation (onboarding step)
+- Basic user setup screen
+- Establishes personalization foundation
+- Positioned after onboarding for narrative continuity
 
-## Get a fresh project
+### Navigation architecture
+- Expo Router file-based navigation
+- Tab bar with Home, Roadmap, Profile
+- Hidden onboarding routes
+- Stack and tab composition pattern
+- Debug routing overlay for development
 
-When you're ready, run:
+### Competition tab (placeholder)
+- Future feature scaffolding
+- Intended for school-based challenges, leaderboards, and engagement mechanics
+
+---
+
+## Alpha key results
+
+The Alpha milestone is considered successful when the following outcomes are achieved:
+
+- Users can create an account and log in successfully in 10 out of 10 structured authentication test attempts.
+- User progress persists after logout and login in at least 3 separate test sessions for each of 3 test users.
+- One complete lesson renders correctly end-to-end with no text truncation, layout overlap, or visual formatting errors across at least 2 device sizes (phone simulator and physical device).
+- Users can navigate through all implemented screens without crashes during 10 full navigation test runs.
+- Lesson completion state saves and restores correctly for 3 test user profiles across multiple sessions.
+
+---
+
+## Planned next steps
+- Build the end-of-Lesson-1 simulation/game: users “invest” in the brand/company they chose and see outcomes based on a few key decisions.
+- Expand the roadmap by creating additional modules with lessons, quizzes, and interactive mini-games (one full lesson-to-game loop per module).
+- Add progress tracking across the full learning loop (lesson completion, quiz results, simulation outcomes) and use it to unlock new modules.
+- Improve personalization (profile details that meaningfully change examples, pacing, and recommended modules).
+- Make the overall experience more creative and engaging (stronger visuals, more personality, smoother transitions, and clearer “why this matters” moments).
+- Implement persistent data storage with Firebase Firestore so accounts, progress, and completion states save and restore across sessions and devices.
+- Continue iterative usability testing and polish based on feedback (clarity, pacing, and “does this feel approachable?”).
+
+---
+
+## Tech stack
+- Expo and React Native
+- Expo Router (file-based navigation)
+- Animated API for onboarding motion
+- TypeScript
+- Ionicons
+- Firebase Authentication (planned user auth)
+- Firebase Firestore (planned user progress, lesson state, and persistence)
+
+---
+
+## Sources and references
+
+Lesson sources live in the `/docs` folder.
+
+Each lesson has its own markdown file (for example `docs/lesson-1-sources.md`) that lists the educational materials used to inform the content and quiz questions.
+
+This keeps lesson references organized as the curriculum grows while making it easy to trace where concepts originated.
+
+All lesson content is paraphrased and adapted for beginner learning. Brand examples are illustrative only and are not investment recommendations.
+
+## Product philosophy
+Invest-ish is built on the idea that investing confidence grows from familiarity rather than information overload.
+
+By starting with brands students already understand, the app reframes investing as curiosity instead of complexity.
+
+---
+
+## Running locally
 
 ```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+npm install
+npx expo start

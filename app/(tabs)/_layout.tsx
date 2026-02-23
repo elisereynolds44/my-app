@@ -26,20 +26,21 @@ export default function TabsLayout() {
         },
 
         tabBarIcon: ({ color, size }) => {
-          let iconName: any;
+          let iconName: keyof typeof Ionicons.glyphMap = "home";
 
           if (route.name === "index") iconName = "home";
-          if (route.name === "profile") iconName = "person";
           if (route.name === "roadmap") iconName = "map";
+          if (route.name === "competition") iconName = "trophy";
+          if (route.name === "profile") iconName = "person";
 
           return <Ionicons name={iconName} size={size ?? 22} color={color} />;
         },
       })}
     >
       <Tabs.Screen name="index" options={{ title: "Home" }} />
-      <Tabs.Screen name="welcome" options={{ href: null }} />
-      <Tabs.Screen name="profile" options={{ title: "Profile" }} />
       <Tabs.Screen name="roadmap" options={{ title: "Roadmap" }} />
+      <Tabs.Screen name="competition" options={{ title: "Compete" }} />
+      <Tabs.Screen name="profile" options={{ title: "Profile" }} />
     </Tabs>
   );
 }
