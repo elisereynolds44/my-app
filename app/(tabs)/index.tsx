@@ -1,4 +1,5 @@
 // app/(tabs)/index.tsx
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, SafeAreaView, StyleSheet, Text, View } from "react-native";
@@ -10,24 +11,44 @@ const GREEN = "#7ED6A5";
 export default function HomeScreen() {
   const full = "Invest-ish";
   const [typed, setTyped] = useState("");
+  const [nextRoute, setNextRoute] = useState<string | null>(null);
 
   const opacity = useRef(new Animated.Value(1)).current;
 
-  // ⭐ slower typewriter for cinematic feel
+  // Decide where to go based on setupComplete
+  useEffect(() => {
+    const decideRoute = async () => {
+      try {
+        const complete = await AsyncStorage.getItem("setupComplete");
+
+        if (complete === "true") {
+          setNextRoute("/roadmap"); // change if your main hub is different
+        } else {
+          setNextRoute("/(onboarding)/profile");
+        }
+      } catch (e) {
+        setNextRoute("/(onboarding)/profile");
+      }
+    };
+
+    decideRoute();
+  }, []);
+
+  // Typewriter animation
   useEffect(() => {
     let i = 0;
     const id = setInterval(() => {
       i += 1;
       setTyped(full.slice(0, i));
       if (i >= full.length) clearInterval(id);
-    }, 140); // <-- slower (was ~90)
+    }, 140);
 
     return () => clearInterval(id);
   }, []);
 
-  // ⭐ longer pause before dissolve → welcome
+  // After typing + pause → fade + route
   useEffect(() => {
-    if (typed !== full) return;
+    if (typed !== full || !nextRoute) return;
 
     const wait = setTimeout(() => {
       Animated.timing(opacity, {
@@ -36,12 +57,12 @@ export default function HomeScreen() {
         useNativeDriver: true,
       }).start(({ finished }) => {
         if (!finished) return;
-        router.replace("/welcome");
+        router.replace(nextRoute as any);
       });
-    }, 1600); // <-- longer hold after typing
+    }, 1600);
 
     return () => clearTimeout(wait);
-  }, [typed, full, opacity]);
+  }, [typed, full, opacity, nextRoute]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -74,7 +95,12 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     marginBottom: 14,
   },
-  badgeText: { color: GREEN, fontWeight: "900", fontSize: 12, letterSpacing: 0.6 },
+  badgeText: {
+    color: GREEN,
+    fontWeight: "900",
+    fontSize: 12,
+    letterSpacing: 0.6,
+  },
 
   title: {
     color: WHITE,

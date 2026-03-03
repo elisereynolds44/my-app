@@ -1,73 +1,106 @@
-import { router } from "expo-router";
-import React from "react";
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router, useFocusEffect } from "expo-router";
+import React, { useCallback, useMemo, useState } from "react";
+import {
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 const NAVY = "#0F172A";
 const WHITE = "#FFFFFF";
 const MUTED = "#CBD5E1";
 
-/**
- * 🔓 Which module is unlocked up to
- * 0 = only first
- * 1 = first two
- * etc
- */
-const unlockedIndex = 0;
-
 const MODULES = [
   {
     id: "lesson-1",
+    route: "/lesson-1",
     title: "Module 1: Foundations",
     description: "Stocks, money, and what investing actually means.",
   },
   {
     id: "lesson-2",
+    route: "/lesson-2",
     title: "Module 2: Markets & movements",
     description: "Why prices change, and why it’s not random.",
   },
   {
     id: "lesson-3",
+    route: "/lesson-3",
     title: "Module 3: Risk & reality",
     description: "How things go wrong, and how people manage that.",
   },
   {
     id: "lesson-4",
+    route: "/lesson-4",
     title: "Module 4: Your first strategy",
     description: "Making choices that actually fit you.",
   },
   {
     id: "lesson-5",
+    route: "/lesson-5",
     title: "Module 5: ETFs & diversification",
     description: "The simplest way to not bet everything on one stock.",
   },
   {
     id: "lesson-6",
+    route: "/lesson-6",
     title: "Module 6: Time horizon",
     description: "When you need the money changes everything.",
   },
   {
     id: "lesson-7",
+    route: "/lesson-7",
     title: "Module 7: Tax basics",
     description: "The stuff nobody explains until it hurts.",
   },
   {
     id: "lesson-8",
+    route: "/lesson-8",
     title: "Module 8: Roth IRA & 401(k)",
     description: "Future-you accounts and how they work.",
   },
   {
     id: "lesson-9",
+    route: "/lesson-9",
     title: "Module 9: Starter portfolio",
     description: "A simple structure you can understand and explain.",
   },
   {
     id: "lesson-10",
+    route: "/lesson-10",
     title: "Module 10: Staying consistent",
     description: "Habits that beat hype, even when markets are weird.",
   },
 ];
 
 export default function RoadmapScreen() {
+  const [completedLesson1, setCompletedLesson1] = useState(false);
+
+  // Refresh when returning to this screen
+  useFocusEffect(
+    useCallback(() => {
+      const load = async () => {
+        try {
+          const done = await AsyncStorage.getItem("completedLesson1");
+          setCompletedLesson1(done === "true");
+        } catch (e) {
+          console.log("Error loading completedLesson1", e);
+        }
+      };
+
+      load();
+    }, [])
+  );
+
+  // Unlock Module 2 when Lesson 1 complete
+  const unlockedIndex = useMemo(() => {
+    return completedLesson1 ? 1 : 0;
+  }, [completedLesson1]);
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -78,24 +111,42 @@ export default function RoadmapScreen() {
 
         {MODULES.map((module, i) => {
           const isReady = i <= unlockedIndex;
+          const isCompleted = module.id === "lesson-1" && completedLesson1;
 
           return (
             <View key={module.id} style={styles.card}>
               <View style={styles.cardHeader}>
                 <Text style={styles.cardTitle}>{module.title}</Text>
-                <Text style={[styles.badge, isReady ? styles.badgeReady : styles.badgeLocked]}>
-                  {isReady ? "Ready" : "Locked"}
-                </Text>
+
+                {isCompleted ? (
+                  <Text style={[styles.badge, styles.badgeComplete]}>
+                    Completed
+                  </Text>
+                ) : (
+                  <Text
+                    style={[
+                      styles.badge,
+                      isReady ? styles.badgeReady : styles.badgeLocked,
+                    ]}
+                  >
+                    {isReady ? "Ready" : "Locked"}
+                  </Text>
+                )}
               </View>
 
-              <Text style={styles.cardDescription}>{module.description}</Text>
+              <Text style={styles.cardDescription}>
+                {module.description}
+              </Text>
 
               {isReady ? (
                 <TouchableOpacity
                   accessibilityRole="button"
                   style={styles.button}
-onPress={() => router.push("/lesson-1")}                >
-                  <Text style={styles.buttonText}>Start module</Text>
+                  onPress={() => router.push(module.route as any)}
+                >
+                  <Text style={styles.buttonText}>
+                    {isCompleted ? "Review module" : "Start module"}
+                  </Text>
                 </TouchableOpacity>
               ) : (
                 <View style={styles.lockedButton}>
@@ -142,7 +193,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    gap: 8,
   },
   cardTitle: {
     color: NAVY,
@@ -165,6 +215,10 @@ const styles = StyleSheet.create({
   badgeLocked: {
     color: "#6B7280",
     backgroundColor: "#E5E7EB",
+  },
+  badgeComplete: {
+    color: "#1D4ED8",
+    backgroundColor: "#DBEAFE",
   },
   cardDescription: {
     color: "#334155",

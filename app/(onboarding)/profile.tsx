@@ -1,14 +1,20 @@
 // app/(tabs)/profile.tsx
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Animated,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { SchoolAutocomplete } from "../../components/SchoolAutocomplete";
@@ -104,7 +110,7 @@ export default function ProfileSetupScreen() {
     ],
   });
 
-  function saveProfile() {
+  async function saveProfile() {
     if (!selectedSchool) {
       Alert.alert("Select your school first.");
       return;
@@ -124,6 +130,17 @@ export default function ProfileSetupScreen() {
       return;
     }
 
+    const fullName = `${firstName.trim()} ${lastName.trim()}`;
+
+    try {
+      await AsyncStorage.setItem("userName", fullName);
+      await AsyncStorage.setItem("userSchool", selectedSchool.name);
+      await AsyncStorage.setItem("userLevel", knowledge); // Beginner/Intermediate/Advanced
+      await AsyncStorage.setItem("lessonsCompleted", "0");
+    } catch (e) {
+      console.log("Error saving profile:", e);
+    }
+
     router.replace({
       pathname: "/roadmap",
       params: {
@@ -137,145 +154,168 @@ export default function ProfileSetupScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Set up your profile</Text>
-      <Text style={styles.subtitle}>Quick setup, then you’re in.</Text>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      // If your header is hidden (you have headerShown:false), 10 is fine.
+      // If you later show a header, bump this to ~60-90.
+      keyboardVerticalOffset={Platform.OS === "ios" ? 10 : 0}
+    >
+      <SafeAreaView style={styles.container}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <Text style={styles.title}>Set up your profile</Text>
+            <Text style={styles.subtitle}>Quick setup, then you’re in.</Text>
 
-      <ProgressDots currentStep={currentStep} totalSteps={3} />
+            <ProgressDots currentStep={currentStep} totalSteps={3} />
 
-      {/* Step 1 */}
-      <Animated.View style={[styles.card, slideFade(step1Anim, 14)]}>
-        <Text style={styles.stepLabel}>Step 1 of 3</Text>
-        <Text style={styles.sectionTitle}>Select your school</Text>
+            {/* Step 1 */}
+            <Animated.View style={[styles.card, slideFade(step1Anim, 14)]}>
+              <Text style={styles.stepLabel}>Step 1 of 3</Text>
+              <Text style={styles.sectionTitle}>Select your school</Text>
 
-        <View style={{ marginTop: 10 }}>
-          <SchoolAutocomplete
-            apiKey={SCORECARD_API_KEY}
-            value={selectedSchool}
-            onSelect={(s) => setSelectedSchool(s)}
-          />
-        </View>
+              <View style={{ marginTop: 10 }}>
+                <SchoolAutocomplete
+                  apiKey={SCORECARD_API_KEY}
+                  value={selectedSchool}
+                  onSelect={(s) => setSelectedSchool(s)}
+                />
+              </View>
 
-        {!!selectedSchool && (
-          <Text style={styles.selectedHint}>
-            Selected: {selectedSchool.name}
-            {selectedSchool.state ? `, ${selectedSchool.state}` : ""}
-          </Text>
-        )}
-      </Animated.View>
-
-      {/* Step 2 */}
-      <Animated.View
-        style={[
-          styles.card,
-          canEnterEmail ? slideFade(step2Anim, 14) : { opacity: 0.55 },
-        ]}
-      >
-        <Text style={styles.stepLabel}>Step 2 of 3</Text>
-        <Text style={styles.sectionTitle}>School email</Text>
-
-        <TextInput
-          value={email}
-          onChangeText={setEmail}
-          placeholder="you@school.edu"
-          placeholderTextColor="#94A3B8"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          style={[styles.input, !canEnterEmail && styles.inputDisabled]}
-          editable={canEnterEmail}
-        />
-
-        {!!email.trim() && (
-          <Text style={[styles.validation, emailIsEdu ? styles.ok : styles.bad]}>
-            {emailIsEdu ? "Looks good" : "Needs to end in .edu"}
-          </Text>
-        )}
-      </Animated.View>
-
-      {/* Step 3 */}
-      <Animated.View
-        style={[
-          styles.card,
-          canEnterDetails ? slideFade(step3Anim, 14) : { opacity: 0.55 },
-        ]}
-      >
-        <Text style={styles.stepLabel}>Step 3 of 3</Text>
-        <Text style={styles.sectionTitle}>About you</Text>
-
-        <View style={styles.row}>
-          <View style={styles.half}>
-            <Text style={styles.label}>First name</Text>
-            <TextInput
-              value={firstName}
-              onChangeText={setFirstName}
-              placeholder="First"
-              placeholderTextColor="#94A3B8"
-              style={[styles.input, !canEnterDetails && styles.inputDisabled]}
-              editable={canEnterDetails}
-            />
-          </View>
-
-          <View style={styles.half}>
-            <Text style={styles.label}>Last name</Text>
-            <TextInput
-              value={lastName}
-              onChangeText={setLastName}
-              placeholder="Last"
-              placeholderTextColor="#94A3B8"
-              style={[styles.input, !canEnterDetails && styles.inputDisabled]}
-              editable={canEnterDetails}
-            />
-          </View>
-        </View>
-
-        <Text style={[styles.label, { marginTop: 10 }]}>Age</Text>
-        <TextInput
-          value={age}
-          onChangeText={setAge}
-          placeholder="e.g., 21"
-          placeholderTextColor="#94A3B8"
-          keyboardType="number-pad"
-          style={[styles.input, !canEnterDetails && styles.inputDisabled]}
-          editable={canEnterDetails}
-        />
-
-        <Text style={[styles.label, { marginTop: 12 }]}>Previous knowledge</Text>
-        <View style={styles.knowledgeRow}>
-          {(["Beginner", "Intermediate", "Advanced"] as Knowledge[]).map((level) => {
-            const selected = knowledge === level;
-            return (
-              <TouchableOpacity
-                key={level}
-                onPress={() => setKnowledge(level)}
-                disabled={!canEnterDetails}
-                style={[
-                  styles.knowledgeButton,
-                  selected && styles.knowledgeButtonSelected,
-                  !canEnterDetails && styles.buttonDisabled,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.knowledgeText,
-                    selected && styles.knowledgeTextSelected,
-                  ]}
-                >
-                  {level}
+              {!!selectedSchool && (
+                <Text style={styles.selectedHint}>
+                  Selected: {selectedSchool.name}
+                  {selectedSchool.state ? `, ${selectedSchool.state}` : ""}
                 </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+              )}
+            </Animated.View>
 
-        <TouchableOpacity
-          style={[styles.saveButton, !canEnterDetails && styles.buttonDisabled]}
-          onPress={saveProfile}
-          disabled={!canEnterDetails}
-        >
-          <Text style={styles.saveButtonText}>Save profile</Text>
-        </TouchableOpacity>
-      </Animated.View>
-    </SafeAreaView>
+            {/* Step 2 */}
+            <Animated.View
+              style={[
+                styles.card,
+                canEnterEmail ? slideFade(step2Anim, 14) : { opacity: 0.55 },
+              ]}
+            >
+              <Text style={styles.stepLabel}>Step 2 of 3</Text>
+              <Text style={styles.sectionTitle}>School email</Text>
+
+              <TextInput
+                value={email}
+                onChangeText={setEmail}
+                placeholder="you@school.edu"
+                placeholderTextColor="#94A3B8"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                style={[styles.input, !canEnterEmail && styles.inputDisabled]}
+                editable={canEnterEmail}
+                returnKeyType="next"
+              />
+
+              {!!email.trim() && (
+                <Text style={[styles.validation, emailIsEdu ? styles.ok : styles.bad]}>
+                  {emailIsEdu ? "Looks good" : "Needs to end in .edu"}
+                </Text>
+              )}
+            </Animated.View>
+
+            {/* Step 3 */}
+            <Animated.View
+              style={[
+                styles.card,
+                canEnterDetails ? slideFade(step3Anim, 14) : { opacity: 0.55 },
+              ]}
+            >
+              <Text style={styles.stepLabel}>Step 3 of 3</Text>
+              <Text style={styles.sectionTitle}>About you</Text>
+
+              <View style={styles.row}>
+                <View style={styles.half}>
+                  <Text style={styles.label}>First name</Text>
+                  <TextInput
+                    value={firstName}
+                    onChangeText={setFirstName}
+                    placeholder="First"
+                    placeholderTextColor="#94A3B8"
+                    style={[styles.input, !canEnterDetails && styles.inputDisabled]}
+                    editable={canEnterDetails}
+                    returnKeyType="next"
+                  />
+                </View>
+
+                <View style={styles.half}>
+                  <Text style={styles.label}>Last name</Text>
+                  <TextInput
+                    value={lastName}
+                    onChangeText={setLastName}
+                    placeholder="Last"
+                    placeholderTextColor="#94A3B8"
+                    style={[styles.input, !canEnterDetails && styles.inputDisabled]}
+                    editable={canEnterDetails}
+                    returnKeyType="next"
+                  />
+                </View>
+              </View>
+
+              <Text style={[styles.label, { marginTop: 10 }]}>Age</Text>
+              <TextInput
+                value={age}
+                onChangeText={setAge}
+                placeholder="e.g., 21"
+                placeholderTextColor="#94A3B8"
+                keyboardType="number-pad"
+                style={[styles.input, !canEnterDetails && styles.inputDisabled]}
+                editable={canEnterDetails}
+                returnKeyType="done"
+              />
+
+              <Text style={[styles.label, { marginTop: 12 }]}>Previous knowledge</Text>
+              <View style={styles.knowledgeRow}>
+                {(["Beginner", "Intermediate", "Advanced"] as Knowledge[]).map((level) => {
+                  const selected = knowledge === level;
+                  return (
+                    <TouchableOpacity
+                      key={level}
+                      onPress={() => setKnowledge(level)}
+                      disabled={!canEnterDetails}
+                      style={[
+                        styles.knowledgeButton,
+                        selected && styles.knowledgeButtonSelected,
+                        !canEnterDetails && styles.buttonDisabled,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.knowledgeText,
+                          selected && styles.knowledgeTextSelected,
+                        ]}
+                      >
+                        {level}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <TouchableOpacity
+                style={[styles.saveButton, !canEnterDetails && styles.buttonDisabled]}
+                onPress={saveProfile}
+                disabled={!canEnterDetails}
+              >
+                <Text style={styles.saveButtonText}>Save profile</Text>
+              </TouchableOpacity>
+            </Animated.View>
+
+            {/* Spacer so the last button can scroll above the keyboard */}
+            <View style={{ height: 12 }} />
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -313,13 +353,21 @@ function ProgressDots({
 /* ---------- Styles ---------- */
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: NAVY, padding: 20 },
+  container: { flex: 1, backgroundColor: NAVY },
+
+  // padding moved here so ScrollView handles keyboard + scrolling correctly
+  scrollContent: { padding: 20, paddingBottom: 40 },
 
   title: { fontSize: 28, fontWeight: "800", color: WHITE, marginBottom: 6 },
   subtitle: { color: MUTED, marginBottom: 14, fontSize: 14, lineHeight: 18 },
 
   dotsRow: { flexDirection: "row", gap: 8, marginBottom: 16 },
-  dot: { width: 10, height: 10, borderRadius: 999, backgroundColor: "rgba(255,255,255,0.25)" },
+  dot: {
+    width: 10,
+    height: 10,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.25)",
+  },
   dotActive: { backgroundColor: GREEN },
   dotComplete: { backgroundColor: "rgba(126,214,165,0.6)" },
 

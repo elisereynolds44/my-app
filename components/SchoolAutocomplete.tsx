@@ -2,7 +2,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  FlatList,
   StyleSheet,
   Text,
   TextInput,
@@ -51,6 +50,7 @@ export function SchoolAutocomplete({
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     const q = query.trim();
+
     if (q.length < 2) {
       setResults([]);
       setLoading(false);
@@ -96,32 +96,29 @@ export function SchoolAutocomplete({
 
       {showDropdown && results.length > 0 && (
         <View style={styles.dropdown}>
-          <FlatList
-            keyboardShouldPersistTaps="handled"
-            data={results}
-            keyExtractor={(item) => String(item.id)}
-            renderItem={({ item }) => {
-              const name = item["school.name"];
-              const city = item["school.city"];
-              const state = item["school.state"];
-              return (
-                <TouchableOpacity
-                  style={styles.row}
-                  onPress={() => {
-                    onSelect({ id: item.id, name, city, state });
-                    setResults([]);
-                    setQuery(name);
-                  }}
-                >
-                  <Text style={styles.name}>{name}</Text>
-                  <Text style={styles.meta}>
-                    {city ? `${city}, ` : ""}
-                    {state ?? ""}
-                  </Text>
-                </TouchableOpacity>
-              );
-            }}
-          />
+          {results.map((item) => {
+            const name = item["school.name"];
+            const city = item["school.city"];
+            const state = item["school.state"];
+
+            return (
+              <TouchableOpacity
+                key={String(item.id)}
+                style={styles.row}
+                onPress={() => {
+                  onSelect({ id: item.id, name, city, state });
+                  setResults([]);
+                  setQuery(name);
+                }}
+              >
+                <Text style={styles.name}>{name}</Text>
+                <Text style={styles.meta}>
+                  {city ? `${city}, ` : ""}
+                  {state ?? ""}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       )}
     </View>
@@ -130,6 +127,7 @@ export function SchoolAutocomplete({
 
 const styles = StyleSheet.create({
   wrap: { width: "100%" },
+
   input: {
     borderWidth: 1,
     borderColor: "rgba(226,232,240,1)",
@@ -139,14 +137,26 @@ const styles = StyleSheet.create({
     fontSize: 15,
     backgroundColor: "white",
   },
-  loadingRow: { flexDirection: "row", alignItems: "center", marginTop: 8 },
+
+  loadingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 8,
+  },
+
   loadingText: {
     marginLeft: 8,
     fontSize: 13,
     color: "rgba(100,116,139,1)",
     fontWeight: "700",
   },
-  error: { marginTop: 8, color: "#EF4444", fontWeight: "700" },
+
+  error: {
+    marginTop: 8,
+    color: "#EF4444",
+    fontWeight: "700",
+  },
+
   dropdown: {
     marginTop: 8,
     borderWidth: 1,
@@ -156,13 +166,20 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     maxHeight: 280,
   },
+
   row: {
     paddingHorizontal: 12,
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: "rgba(241,245,249,1)",
   },
-  name: { fontSize: 14, fontWeight: "900", color: "#0F172A" },
+
+  name: {
+    fontSize: 14,
+    fontWeight: "900",
+    color: "#0F172A",
+  },
+
   meta: {
     marginTop: 2,
     fontSize: 12,
