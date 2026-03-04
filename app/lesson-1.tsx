@@ -43,6 +43,9 @@ type LessonStep =
     }
   | { kind: "win"; kicker: string; title: string; body: string };
 
+const BRAND_KEY = "lesson1Brand";
+const INDEX_KEY = "lesson1SlideIndex";
+
 export default function LessonOneScreen() {
   const params = useLocalSearchParams<{ firstName?: string }>();
   const firstName = params.firstName ?? "friend";
@@ -69,184 +72,334 @@ export default function LessonOneScreen() {
         ],
       },
 
-      // CYCLE 1 — Q1
+      // CYCLE 1
+      {
+        kind: "info",
+        kicker: "OWNERSHIP",
+        title: "A stock represents ownership.",
+        body:
+          "When you buy a stock, you purchase a small ownership stake in a company. Ownership links your financial outcome to the company’s performance over time.",
+      },
+      {
+        kind: "example",
+        kicker: "EXAMPLE",
+        title: "Customer versus owner.",
+        scenario: (brand: string) =>
+          `You eat at ${brand} all the time. As a customer, you care about taste, convenience, and experience. As an owner, you start paying attention to revenue, costs, and growth.`,
+        takeaway: (_brand: string) => "Owning a stock changes what you pay attention to.",
+      },
       {
         kind: "question",
         kicker: "QUIZ",
         title: "Ownership",
         prompt: "Buying a stock is best described as:",
         options: [
-          { key: "A", text: "Buying partial ownership in a business." },
-          { key: "B", text: "Buying a product you like from a company." },
-          { key: "C", text: "Getting a guaranteed return." },
+          { key: "A", text: "Buying a product you like." },
+          { key: "B", text: "Buying partial ownership in a business." },
+          { key: "C", text: "A guaranteed return." },
         ],
-        correct: "A",
-        correctMsg: "Correct. A stock represents partial ownership in a business.",
+        correct: "B",
+        correctMsg: "Correct. A stock is partial ownership in a business.",
         wrongMsg:
-          "Not quite. Stocks are ownership, not a product purchase, and returns are never guaranteed.",
+          "Not quite. A stock is ownership in the business, not a product purchase or a guarantee.",
       },
 
-      // CYCLE 2 — Q2
+      // CYCLE 2
+      {
+        kind: "info",
+        kicker: "OWNERSHIP",
+        title: "Ownership creates alignment.",
+        body:
+          "Owners benefit when the business improves. Strong operations, expansion, and profitability can increase the value of ownership over time.",
+      },
+      {
+        kind: "example",
+        kicker: "EXAMPLE",
+        title: "When the business improves.",
+        scenario: (brand: string) =>
+          `If ${brand} opens successful new locations and keeps customers coming back, the business can grow. As an owner, that growth can increase the value of your shares.`,
+        takeaway: (_brand: string) => "As an owner, you benefit when the business improves.",
+      },
       {
         kind: "question",
         kicker: "QUIZ",
         title: "Why ownership matters",
         prompt: "Why does ownership matter:",
         options: [
-          { key: "A", text: "It guarantees profits." },
-          { key: "B", text: "It links your outcome to the business." },
-          { key: "C", text: "It makes you a customer with perks." },
+          { key: "A", text: "It makes you a customer." },
+          { key: "B", text: "It guarantees dividends." },
+          { key: "C", text: "It links your outcome to the business." },
         ],
-        correct: "B",
-        correctMsg: "Correct. Ownership ties your results to business performance.",
+        correct: "C",
+        correctMsg: "Correct. Ownership links your outcome to business performance.",
         wrongMsg:
-          "Not quite. Ownership does not guarantee profits or perks. It connects your outcome to the business.",
+          "Not quite. Ownership is about your financial outcome being tied to the business, not guarantees.",
       },
 
-      // CYCLE 3 — Q3
+      // CYCLE 3
+      {
+        kind: "info",
+        kicker: "GROWTH",
+        title: "Revenue growth signals demand.",
+        body:
+          "Revenue reflects how much money a company brings in from sales. Rising revenue often indicates customers are purchasing more over time.",
+      },
+      {
+        kind: "example",
+        kicker: "EXAMPLE",
+        title: "Demand in real life.",
+        scenario: (brand: string) =>
+          `If ${brand} stores are consistently busy and the company keeps expanding into new areas, that can be a sign demand is increasing.`,
+        takeaway: (_brand: string) => "Revenue growth is often a sign that demand is rising.",
+      },
       {
         kind: "question",
         kicker: "QUIZ",
         title: "Revenue growth",
         prompt: "Revenue growth typically indicates:",
         options: [
-          { key: "A", text: "Increasing demand." },
-          { key: "B", text: "The company is automatically profitable." },
-          { key: "C", text: "Lower competition." },
+          { key: "A", text: "Fewer customers." },
+          { key: "B", text: "Increasing demand." },
+          { key: "C", text: "Revenue does not matter." },
         ],
-        correct: "A",
+        correct: "B",
         correctMsg: "Correct. Rising revenue often reflects increasing demand.",
         wrongMsg:
-          "Not quite. Revenue can grow without profitability, and it does not necessarily mean competition is lower.",
+          "Not quite. Revenue growth usually reflects customers buying more, which is increasing demand.",
       },
 
-      // CYCLE 4 — Q4
+      // CYCLE 4
+      {
+        kind: "info",
+        kicker: "GROWTH",
+        title: "Profit growth signals efficiency.",
+        body:
+          "A company can grow revenue without growing profit if costs rise faster than sales. Profit growth often signals improved efficiency or stronger pricing power.",
+      },
+      {
+        kind: "example",
+        kicker: "EXAMPLE",
+        title: "Sales versus profit.",
+        scenario: (brand: string) =>
+          `If ingredient and labor costs rise for ${brand}, profits can shrink even if sales stay strong. Growing sales is good, but cost control matters too.`,
+        takeaway: (_brand: string) =>
+          "Profit shows whether growth is actually translating into financial results.",
+      },
       {
         kind: "question",
         kicker: "QUIZ",
         title: "Revenue and profit",
         prompt: "A company with rising revenue but falling profit is most likely:",
         options: [
-          { key: "A", text: "Guaranteed to outperform later." },
-          { key: "B", text: "Becoming more efficient." },
-          { key: "C", text: "Facing rising costs or shrinking margins." },
+          { key: "A", text: "Less efficient." },
+          { key: "B", text: "More efficient." },
+          { key: "C", text: "Guaranteed to outperform." },
         ],
-        correct: "C",
-        correctMsg:
-          "Correct. Falling profit alongside rising revenue often means costs are rising faster or margins are shrinking.",
+        correct: "A",
+        correctMsg: "Correct. Falling profit can indicate costs are rising faster than revenue.",
         wrongMsg:
-          "Not quite. This pattern usually points to cost pressure or weaker margins, not guaranteed outperformance or improved efficiency.",
+          "Not quite. If profit is falling while revenue rises, costs may be growing too quickly.",
       },
 
-      // CYCLE 5 — Q5
+      // CYCLE 5
+      {
+        kind: "info",
+        kicker: "EXPECTATIONS",
+        title: "Markets price expectations.",
+        body:
+          "Stock prices reflect what investors believe will happen in the future, not just what has happened in the past. Expectations are built into the price.",
+      },
+      {
+        kind: "example",
+        kicker: "EXAMPLE",
+        title: "Expectations can already be priced in.",
+        scenario: (brand: string) =>
+          `If everyone expects ${brand} to grow rapidly for years, that optimism can already be reflected in the stock price today.`,
+        takeaway: (_brand: string) => "A strong story can be priced in before it actually happens.",
+      },
       {
         kind: "question",
         kicker: "QUIZ",
         title: "What prices reflect",
         prompt: "Stock prices primarily reflect:",
         options: [
-          { key: "A", text: "How popular the brand is today." },
-          { key: "B", text: "What investors expect to happen in the future." },
-          { key: "C", text: "Only what happened last quarter." },
+          { key: "A", text: "Future expectations." },
+          { key: "B", text: "Past events only." },
+          { key: "C", text: "Store popularity." },
         ],
-        correct: "B",
-        correctMsg: "Correct. Prices mainly reflect expectations about the future.",
-        wrongMsg:
-          "Not quite. Popularity and past events matter, but prices are mostly about future expectations.",
+        correct: "A",
+        correctMsg: "Correct. Prices reflect expectations about the future.",
+        wrongMsg: "Not quite. Prices are mainly about expectations of what will happen next.",
       },
 
-      // CYCLE 6 — Q6
+      // CYCLE 6
+      {
+        kind: "info",
+        kicker: "EXPECTATIONS",
+        title: "Surprises move markets.",
+        body:
+          "Prices often change when reality differs from expectations. New information matters most when it changes what investors believe about the future.",
+      },
+      {
+        kind: "example",
+        kicker: "EXAMPLE",
+        title: "Good news can still disappoint.",
+        scenario: (brand: string) =>
+          `If ${brand} grows, but not as fast as investors expected, the stock price can fall. The market reacts to the gap between expectations and reality.`,
+        takeaway: (_brand: string) => "Performance matters, but expectations set the bar.",
+      },
       {
         kind: "question",
         kicker: "QUIZ",
         title: "Why prices move",
         prompt: "Stock prices often move most when:",
         options: [
-          { key: "A", text: "New information changes expectations." },
-          { key: "B", text: "The company releases a new logo." },
-          { key: "C", text: "The CEO posts on social media." },
+          { key: "A", text: "Expectations change." },
+          { key: "B", text: "The menu changes." },
+          { key: "C", text: "A store gets renovated." },
         ],
         correct: "A",
-        correctMsg: "Correct. Big moves happen when expectations shift.",
-        wrongMsg:
-          "Not quite. Markets react most to information that changes future expectations, not cosmetic changes.",
+        correctMsg: "Correct. Prices move when expectations about the future change.",
+        wrongMsg: "Not quite. The main driver is changing expectations about what comes next.",
       },
 
-      // CYCLE 7 — Q7
+      // CYCLE 7
+      {
+        kind: "info",
+        kicker: "PRICE AND VALUE",
+        title: "Great company does not equal great investment.",
+        body:
+          "Investment outcomes depend on both company quality and the price you pay. A great business can still be a poor investment at the wrong price.",
+      },
+      {
+        kind: "example",
+        kicker: "EXAMPLE",
+        title: "Two separate questions.",
+        scenario: (brand: string) =>
+          `You can believe ${brand} is an excellent business and still decide not to buy the stock right now. The missing piece is whether the current price is reasonable for the growth you expect.`,
+        takeaway: (_brand: string) => "Business quality and purchase price are separate decisions.",
+      },
       {
         kind: "question",
         kicker: "QUIZ",
         title: "Company versus investment",
         prompt: "Which statement is most accurate:",
         options: [
-          { key: "A", text: "Price does not matter if the company is great." },
+          { key: "A", text: "Great company always means great investment." },
           { key: "B", text: "A great company can still be overpriced." },
-          { key: "C", text: "A strong brand always means strong returns." },
+          { key: "C", text: "Price does not matter." },
         ],
         correct: "B",
-        correctMsg: "Correct. A great business can be a bad investment at the wrong price.",
+        correctMsg: "Correct. A strong business can still be overpriced.",
         wrongMsg:
-          "Not quite. Business quality helps, but the price you pay is a huge part of the outcome.",
+          "Not quite. Even great companies can be poor investments if the price is too high.",
       },
 
-      // CYCLE 8 — Q8
+      // CYCLE 8
+      {
+        kind: "info",
+        kicker: "PRICE AND VALUE",
+        title: "Overpaying limits upside.",
+        body:
+          "Even strong businesses can deliver weak returns if purchased at excessive valuations. Paying too much can reduce future return potential.",
+      },
+      {
+        kind: "example",
+        kicker: "EXAMPLE",
+        title: "Priced for perfection.",
+        scenario: (brand: string) =>
+          `If ${brand} stock is priced as if everything will go perfectly for years, the upside can be limited. Any slowdown can hurt returns, even if the company is still doing well.`,
+        takeaway: (_brand: string) =>
+          "The price you pay shapes the return you can reasonably expect.",
+      },
       {
         kind: "question",
         kicker: "QUIZ",
         title: "Overpaying",
         prompt: "Overpaying primarily affects:",
         options: [
-          { key: "A", text: "The company’s management team." },
-          { key: "B", text: "Whether the product tastes good." },
-          { key: "C", text: "Your future return potential." },
+          { key: "A", text: "Business quality." },
+          { key: "B", text: "Future return potential." },
+          { key: "C", text: "Brand strength." },
         ],
-        correct: "C",
-        correctMsg: "Correct. Overpaying reduces the return you can reasonably expect.",
-        wrongMsg:
-          "Not quite. Paying too much does not change the product or management. It mainly changes your potential return.",
+        correct: "B",
+        correctMsg: "Correct. Overpaying reduces future return potential.",
+        wrongMsg: "Not quite. Paying too much mainly impacts how much return is left for you.",
       },
 
-      // CYCLE 9 — Q9
+      // CYCLE 9
+      {
+        kind: "info",
+        kicker: "FRAMEWORK",
+        title: "A simple checklist reduces noise.",
+        body:
+          "Beginners benefit from consistent evaluation criteria rather than intuition alone. A checklist helps you focus on the same fundamentals across any company.",
+      },
+      {
+        kind: "example",
+        kicker: "EXAMPLE",
+        title: "A beginner checklist.",
+        scenario: (brand: string) =>
+          `For ${brand}, you can start with three questions. Is revenue growing. Are profits improving. Is the company positioned to keep growing without weakening the business.`,
+        takeaway: (_brand: string) =>
+          "A checklist keeps your thinking consistent across different companies.",
+      },
       {
         kind: "question",
         kicker: "QUIZ",
         title: "Why a checklist helps",
         prompt: "A checklist helps beginners because it:",
         options: [
-          { key: "A", text: "Creates consistent thinking across companies." },
-          { key: "B", text: "Guarantees you will pick winners." },
-          { key: "C", text: "Eliminates risk." },
+          { key: "A", text: "Creates consistency." },
+          { key: "B", text: "Reduces noise." },
+          { key: "C", text: "Guarantees accuracy." },
         ],
         correct: "A",
-        correctMsg: "Correct. A checklist builds consistency and reduces noise.",
+        correctMsg: "Correct. A checklist creates consistent thinking and reduces noise.",
         wrongMsg:
-          "Not quite. It does not remove risk or guarantee winners. It helps you evaluate consistently.",
+          "Not quite. It does not remove uncertainty or guarantee outcomes, but it does create consistency.",
       },
 
-      // CYCLE 10 — Q10
+      // CYCLE 10
+      {
+        kind: "info",
+        kicker: "TIME HORIZON",
+        title: "Long-term thinking matters.",
+        body:
+          "Short-term price movements are unpredictable, but business progress unfolds over longer periods. Long-term investing emphasizes the business trajectory, not daily volatility.",
+      },
+      {
+        kind: "example",
+        kicker: "EXAMPLE",
+        title: "Zooming out.",
+        scenario: (brand: string) =>
+          `If ${brand} executes well for years, ownership value can reflect that progress over time. Day to day price moves are noisy, but long-term business performance is the signal.`,
+        takeaway: (_brand: string) =>
+          "Long-term thinking shifts attention from daily noise to business progress.",
+      },
       {
         kind: "question",
         kicker: "FINAL QUIZ",
         title: "Long-term investing",
         prompt: "Long-term investing emphasizes:",
         options: [
-          { key: "A", text: "Perfectly timing the market." },
-          { key: "B", text: "Daily price movement." },
+          { key: "A", text: "Daily price movement." },
+          { key: "B", text: "Future expectations." },
           { key: "C", text: "Business progress over time." },
         ],
         correct: "C",
         correctMsg: "Correct. Long-term investing focuses on business progress over time.",
         wrongMsg:
-          "Not quite. Long-term investing is less about daily moves or perfect timing and more about business progress over years.",
+          "Not quite. Long-term investing is mainly about business progress over time, not daily moves or perfect timing.",
       },
 
       // WIN
       {
         kind: "win",
-        kicker: "MODULE COMPLETE",
-        title: "You finished Module 1.",
+        kicker: "LESSON COMPLETE",
+        title: "Lesson 1 complete.",
         body:
-          "You now understand the basics of ownership, revenue, profit, expectations, and price vs value. Module 2 will introduce how markets actually move.",
+          "You now have a basic investing framework: ownership, demand and profit, expectations, and price versus value. Next, we will cover risk, diversification, and how to start responsibly.",
       },
     ],
     []
@@ -255,37 +408,63 @@ export default function LessonOneScreen() {
   const total = steps.length;
   const [i, setI] = useState(0);
 
-  // ---- Lesson 1 progress persistence (step index) ----
+  // Load saved brand + saved index.
+  // Critical behavior: if there is no saved brand yet, force i = 0 so the pick screen shows.
   useEffect(() => {
-    const loadSavedIndex = async () => {
+    const load = async () => {
       try {
-        const stored = await AsyncStorage.getItem("lesson1SlideIndex");
-        if (stored !== null) {
-          const parsed = Number(stored);
+        const storedBrand = await AsyncStorage.getItem(BRAND_KEY);
+        if (storedBrand) setFavoriteBrand(storedBrand);
+
+        const storedIndex = await AsyncStorage.getItem(INDEX_KEY);
+        if (storedIndex !== null) {
+          const parsed = Number(storedIndex);
           if (!Number.isNaN(parsed)) {
             const clamped = Math.max(0, Math.min(parsed, total - 1));
-            setI(clamped);
+
+            // If brand is not chosen yet, always start at pick.
+            if (!storedBrand) {
+              setI(0);
+            } else {
+              setI(clamped);
+            }
           }
+        } else {
+          // No saved index
+          setI(storedBrand ? 0 : 0);
         }
       } catch (e) {
-        console.log("Error loading lesson1SlideIndex", e);
+        console.log("Error loading lesson 1 state", e);
+        setI(0);
       }
     };
 
-    loadSavedIndex();
+    load();
   }, [total]);
 
+  // Persist index
   useEffect(() => {
     const saveIndex = async () => {
       try {
-        await AsyncStorage.setItem("lesson1SlideIndex", String(i));
+        await AsyncStorage.setItem(INDEX_KEY, String(i));
       } catch (e) {
         console.log("Error saving lesson1SlideIndex", e);
       }
     };
-
     saveIndex();
   }, [i]);
+
+  // Persist brand
+  useEffect(() => {
+    const saveBrand = async () => {
+      try {
+        if (favoriteBrand) await AsyncStorage.setItem(BRAND_KEY, favoriteBrand);
+      } catch (e) {
+        console.log("Error saving lesson1Brand", e);
+      }
+    };
+    saveBrand();
+  }, [favoriteBrand]);
 
   const [choice, setChoice] = useState<Choice>(null);
   const [checked, setChecked] = useState(false);
@@ -295,7 +474,6 @@ export default function LessonOneScreen() {
   const isLast = i === total - 1;
 
   const brand = favoriteBrand ?? "your chosen brand";
-
   const progressPct = Math.round(((i + 1) / total) * 100);
 
   const canContinue = step.kind !== "pick" ? true : favoriteBrand !== null;
@@ -318,6 +496,24 @@ export default function LessonOneScreen() {
     setChecked(false);
     setI((prev) => Math.max(prev - 1, 0));
   };
+
+const resetLesson = async () => {
+  try {
+    // wipe stored progress
+    await AsyncStorage.multiRemove([INDEX_KEY, BRAND_KEY]);
+
+    // force fresh start
+    await AsyncStorage.setItem(INDEX_KEY, "0");
+
+    // reset local state
+    setFavoriteBrand(null);
+    setChoice(null);
+    setChecked(false);
+    setI(0);
+  } catch (e) {
+    console.log("Error resetting lesson 1", e);
+  }
+};
 
   return (
     <SafeAreaView style={styles.container}>
@@ -354,6 +550,10 @@ export default function LessonOneScreen() {
               );
             })}
             {favoriteBrand && <Text style={styles.pickHint}>Selected: {favoriteBrand}</Text>}
+
+            <TouchableOpacity onPress={resetLesson} style={styles.resetBtn}>
+              <Text style={styles.resetText}>Reset Lesson 1 (demo)</Text>
+            </TouchableOpacity>
           </>
         )}
 
@@ -485,8 +685,7 @@ export default function LessonOneScreen() {
                 (!checked || choice !== step.correct) && { opacity: 0.5 },
             ]}
             disabled={
-              !canContinue ||
-              (step.kind === "question" && (!checked || choice !== step.correct))
+              !canContinue || (step.kind === "question" && (!checked || choice !== step.correct))
             }
           >
             <Text style={styles.primaryText}>Continue</Text>
@@ -495,7 +694,8 @@ export default function LessonOneScreen() {
           <TouchableOpacity
             onPress={async () => {
               await AsyncStorage.setItem("completedLesson1", "true");
-              await AsyncStorage.removeItem("lesson1SlideIndex");
+              await AsyncStorage.removeItem(INDEX_KEY);
+              await AsyncStorage.removeItem(BRAND_KEY);
               router.replace("/roadmap");
             }}
             style={styles.primaryBtn}
@@ -570,6 +770,17 @@ const styles = StyleSheet.create({
   pickText: { color: MUTED, fontWeight: "900" },
   pickTextSelected: { color: WHITE },
   pickHint: { marginTop: 6, color: MUTED, fontWeight: "900", fontSize: 12 },
+
+  resetBtn: {
+    marginTop: 10,
+    alignSelf: "flex-start",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.20)",
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  resetText: { color: WHITE, fontWeight: "900", fontSize: 12 },
 
   chartWrap: {
     flexDirection: "row",
