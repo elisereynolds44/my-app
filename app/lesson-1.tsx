@@ -619,7 +619,7 @@ export default function LessonOneScreen() {
             {favoriteBrand && <Text style={styles.pickHint}>Selected: {favoriteBrand}</Text>}
 
             <TouchableOpacity onPress={resetLesson} style={styles.resetBtn}>
-              <Text style={styles.resetText}>Reset Lesson 1 (demo)</Text>
+              <Text style={styles.resetText}>Reset Lesson 1</Text>
             </TouchableOpacity>
           </>
         )}
