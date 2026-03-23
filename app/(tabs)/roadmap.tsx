@@ -125,8 +125,12 @@ export default function RoadmapScreen() {
           const actionRoute = isModuleOne && isLessonDone && !completedSimulation1
             ? "/simulation-1"
             : module.route;
-          const actionLabel = isModuleOne && isLessonDone && !completedSimulation1
-            ? "Start simulation"
+          const actionLabel = isModuleOne
+            ? isCompleted
+              ? "Replay module"
+              : isLessonDone
+                ? "Start simulation"
+                : "Start lesson 1"
             : isCompleted
               ? "Review module"
               : "Start module";
@@ -159,6 +163,10 @@ export default function RoadmapScreen() {
               {isModuleOne && isLessonDone && !completedSimulation1 ? (
                 <Text style={styles.helperText}>
                   Lesson complete. Finish the simulation to complete Module 1.
+                </Text>
+              ) : isModuleOne && !isLessonDone ? (
+                <Text style={styles.helperText}>
+                  Complete Lesson 1 first, then the simulation opens immediately after.
                 </Text>
               ) : null}
 

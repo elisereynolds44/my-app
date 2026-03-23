@@ -376,9 +376,17 @@ export default function SimulationOneScreen() {
       return;
     }
 
-    AsyncStorage.getItem(LAST_BRAND_KEY).then((value) => {
+    Promise.all([
+      AsyncStorage.getItem(LAST_BRAND_KEY),
+      AsyncStorage.getItem("completedLesson1"),
+    ]).then(([value, lessonDone]) => {
       if (value) {
         setBrand(value);
+        return;
+      }
+
+      if (lessonDone !== "true") {
+        router.replace("/lesson-1");
       }
     });
   }, [params.brand]);
@@ -447,14 +455,14 @@ export default function SimulationOneScreen() {
             <Text style={styles.avatarMood}>
               {selectedCharacter?.label ?? "Your character"} {mood}.
             </Text>
-            <Text style={styles.avatarBrand}>Tracking: {resolvedBrand}</Text>
+            <Text style={styles.avatarBrand}>Your brand: {resolvedBrand}</Text>
           </View>
         </View>
 
         <View style={styles.tickerRow}>
           {[
             `${round.kicker}`,
-            `${resolvedBrand}`,
+            `Brand ${resolvedBrand}`,
             `Cash ${stats.cash}`,
             `Confidence ${stats.confidence}`,
             `Conviction ${stats.conviction}`,
