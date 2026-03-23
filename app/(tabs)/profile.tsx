@@ -12,7 +12,7 @@ import {
   View,
 } from "react-native";
 
-import { CharacterOption, Knowledge, useProfile } from "@/components/profile-context";
+import { CharacterOption, useProfile } from "@/components/profile-context";
 
 const NAVY = "#0F172A";
 const WHITE = "#FFFFFF";
@@ -27,7 +27,6 @@ export default function ProfileSetupScreen() {
 
   const [email, setEmail] = useState(profile?.email ?? "");
   const [firstName, setFirstName] = useState(profile?.firstName ?? "");
-  const [knowledge, setKnowledge] = useState<Knowledge>(profile?.knowledge ?? "Beginner");
   const [characterId, setCharacterId] = useState(profile?.characterId ?? "");
   const [isEditing, setIsEditing] = useState(!profile);
 
@@ -37,17 +36,14 @@ export default function ProfileSetupScreen() {
   }, [email]);
 
   const canChooseCharacter = firstName.trim().length > 0 && emailLooksValid;
-  const canChooseExperience = canChooseCharacter && characterId !== "";
 
   const currentStep = useMemo(() => {
     if (!firstName.trim() || !emailLooksValid) return 1;
-    if (!characterId) return 2;
-    return 3;
-  }, [characterId, emailLooksValid, firstName]);
+    return 2;
+  }, [emailLooksValid, firstName]);
 
   const step1Anim = useRef(new Animated.Value(0)).current;
   const step2Anim = useRef(new Animated.Value(0)).current;
-  const step3Anim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.timing(step1Anim, {
@@ -68,18 +64,6 @@ export default function ProfileSetupScreen() {
       step2Anim.setValue(0);
     }
   }, [canChooseCharacter, step2Anim]);
-
-  useEffect(() => {
-    if (canChooseExperience) {
-      Animated.timing(step3Anim, {
-        toValue: 1,
-        duration: 420,
-        useNativeDriver: true,
-      }).start();
-    } else {
-      step3Anim.setValue(0);
-    }
-  }, [canChooseExperience, step3Anim]);
 
   const slideFade = (anim: Animated.Value, yFrom = 10) => ({
     opacity: anim,
@@ -124,7 +108,6 @@ export default function ProfileSetupScreen() {
       characterId,
       email: email.trim().toLowerCase(),
       firstName: firstName.trim(),
-      knowledge,
     });
 
     setIsEditing(false);
@@ -142,7 +125,6 @@ export default function ProfileSetupScreen() {
             <CharacterBadge character={selectedCharacter} size="large" />
             <Text style={styles.summaryName}>{profile.firstName}</Text>
             <Text style={styles.summaryEmail}>{profile.email}</Text>
-            <Text style={styles.summaryMeta}>Starting level: {profile.knowledge}</Text>
             <TouchableOpacity style={styles.secondaryButton} onPress={() => setIsEditing(true)}>
               <Text style={styles.secondaryButtonText}>Edit profile</Text>
             </TouchableOpacity>
@@ -158,10 +140,10 @@ export default function ProfileSetupScreen() {
         <Text style={styles.title}>Set up your profile</Text>
         <Text style={styles.subtitle}>We only ask for what you’ll actually use as you learn.</Text>
 
-        <ProgressDots currentStep={currentStep} totalSteps={3} />
+        <ProgressDots currentStep={currentStep} totalSteps={2} />
 
         <Animated.View style={[styles.card, slideFade(step1Anim, 14)]}>
-          <Text style={styles.stepLabel}>Step 1 of 3</Text>
+          <Text style={styles.stepLabel}>Step 1 of 2</Text>
           <Text style={styles.sectionTitle}>Basics you’ll use</Text>
           <Text style={styles.helper}>
             Your name personalizes the app, and your email helps identify your account later.
@@ -197,11 +179,10 @@ export default function ProfileSetupScreen() {
         <Animated.View
           style={[styles.card, canChooseCharacter ? slideFade(step2Anim, 14) : styles.lockedCard]}
         >
-          <Text style={styles.stepLabel}>Step 2 of 3</Text>
+          <Text style={styles.stepLabel}>Step 2 of 2</Text>
           <Text style={styles.sectionTitle}>Pick your character</Text>
           <Text style={styles.helper}>
-            Inspired by the playful animal-avatar idea you mentioned, this character will follow you on
-            your profile and roadmap.
+            Pick the one with the vibe you want. You can always change it later.
           </Text>
 
           <View style={styles.characterGrid}>
@@ -226,46 +207,11 @@ export default function ProfileSetupScreen() {
               );
             })}
           </View>
-        </Animated.View>
-
-        <Animated.View
-          style={[styles.card, canChooseExperience ? slideFade(step3Anim, 14) : styles.lockedCard]}
-        >
-          <Text style={styles.stepLabel}>Step 3 of 3</Text>
-          <Text style={styles.sectionTitle}>Where are you starting?</Text>
-          <Text style={styles.helper}>This helps us pace the roadmap and lessons appropriately.</Text>
-
-          <View style={styles.knowledgeRow}>
-            {(["Beginner", "Intermediate", "Advanced"] as Knowledge[]).map((level) => {
-              const selected = knowledge === level;
-              return (
-                <TouchableOpacity
-                  key={level}
-                  onPress={() => setKnowledge(level)}
-                  disabled={!canChooseExperience}
-                  style={[
-                    styles.knowledgeButton,
-                    selected && styles.knowledgeButtonSelected,
-                    !canChooseExperience && styles.buttonDisabled,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.knowledgeText,
-                      selected && styles.knowledgeTextSelected,
-                    ]}
-                  >
-                    {level}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
 
           <TouchableOpacity
-            style={[styles.saveButton, !canChooseExperience && styles.buttonDisabled]}
+            style={[styles.saveButton, (!canChooseCharacter || !characterId) && styles.buttonDisabled]}
             onPress={saveProfile}
-            disabled={!canChooseExperience}
+            disabled={!canChooseCharacter || !characterId}
           >
             <Text style={styles.saveButtonText}>Save profile</Text>
           </TouchableOpacity>
@@ -434,13 +380,14 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   characterCard: {
-    width: "47%",
+    width: "30%",
     borderWidth: 1,
     borderRadius: 14,
-    padding: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
     backgroundColor: PANEL,
     alignItems: "center",
-    gap: 10,
+    gap: 8,
   },
   characterBadge: {
     borderRadius: 999,
@@ -452,38 +399,16 @@ const styles = StyleSheet.create({
   },
   characterLabel: {
     color: NAVY,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "800",
-  },
-  knowledgeRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginTop: 6,
-    marginBottom: 8,
-  },
-  knowledgeButton: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 10,
-    backgroundColor: "#E2E8F0",
-    alignItems: "center",
-  },
-  knowledgeButtonSelected: {
-    backgroundColor: NAVY,
-  },
-  knowledgeText: {
-    fontWeight: "900",
-    marginTop: 4,
-    color: NAVY,
-  },
-  knowledgeTextSelected: {
-    color: WHITE,
+    textAlign: "center",
   },
   saveButton: {
     backgroundColor: NAVY,
     paddingVertical: 12,
     borderRadius: 14,
     alignItems: "center",
+    marginTop: 8,
   },
   saveButtonText: {
     color: WHITE,
@@ -537,10 +462,5 @@ const styles = StyleSheet.create({
   summaryEmail: {
     color: "#475569",
     fontSize: 14,
-  },
-  summaryMeta: {
-    color: "#64748B",
-    fontSize: 14,
-    fontWeight: "700",
   },
 });
