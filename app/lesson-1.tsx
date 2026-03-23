@@ -32,6 +32,13 @@ type LessonStep =
       note?: string;
     }
   | {
+      kind: "snapshot";
+      kicker: string;
+      title: string;
+      eyebrow: string;
+      bullets: string[];
+    }
+  | {
       kind: "question";
       kicker: string;
       title: string;
@@ -121,6 +128,18 @@ export default function LessonOneScreen() {
         takeaway: (_brand: string) => "As an owner, you benefit when the business improves.",
       },
       {
+        kind: "snapshot",
+        kicker: "TOOL",
+        title: "What Yahoo Finance is trying to show you.",
+        eyebrow: "A stock page is a dashboard of clues, not a crystal ball.",
+        bullets: [
+          "The price chart shows how the stock has moved over time.",
+          "Revenue and earnings help you judge whether the business is actually growing.",
+          "News headlines tell you what new information might be changing expectations.",
+          "Valuation metrics help you ask whether the stock already looks expensive.",
+        ],
+      },
+      {
         kind: "question",
         kicker: "QUIZ",
         title: "Why ownership matters",
@@ -143,6 +162,20 @@ export default function LessonOneScreen() {
         title: "Revenue growth signals demand.",
         body:
           "Revenue reflects how much money a company brings in from sales. Rising revenue often indicates customers are purchasing more over time.",
+      },
+      {
+        kind: "visual",
+        kicker: "GRAPH",
+        title: "This is the kind of revenue trend you want to notice.",
+        caption: (brand: string) =>
+          `If ${brand} looked like this over four quarters on Yahoo Finance, you would say demand appears to be rising.`,
+        bars: [
+          { label: "Q1", value: 40 },
+          { label: "Q2", value: 54 },
+          { label: "Q3", value: 71 },
+          { label: "Q4", value: 88 },
+        ],
+        note: "The point is not to memorize numbers. It is to notice direction and consistency.",
       },
       {
         kind: "example",
@@ -177,6 +210,19 @@ export default function LessonOneScreen() {
           "A company can grow revenue without growing profit if costs rise faster than sales. Profit growth often signals improved efficiency or stronger pricing power.",
       },
       {
+        kind: "visual",
+        kicker: "GRAPH",
+        title: "Revenue and profit are not the same picture.",
+        caption: (brand: string) =>
+          `A ${brand} chart could show strong sales while profit stays weaker because costs are eating into the gains.`,
+        bars: [
+          { label: "Revenue", value: 90 },
+          { label: "Profit", value: 46 },
+          { label: "Costs", value: 72 },
+        ],
+        note: "This is why investors look past the top-line headline and into the business details.",
+      },
+      {
         kind: "example",
         kicker: "EXAMPLE",
         title: "Sales versus profit.",
@@ -208,6 +254,19 @@ export default function LessonOneScreen() {
         title: "Markets price expectations.",
         body:
           "Stock prices reflect what investors believe will happen in the future, not just what has happened in the past. Expectations are built into the price.",
+      },
+      {
+        kind: "visual",
+        kicker: "GRAPH",
+        title: "The chart can move before the report comes out.",
+        caption: (brand: string) =>
+          `If investors expect ${brand} to post a huge quarter, the stock can already rise before earnings day arrives.`,
+        bars: [
+          { label: "Last report", value: 36 },
+          { label: "Expectation", value: 82 },
+          { label: "Current price", value: 74 },
+        ],
+        note: "Price reacts to changing expectations, not just old information.",
       },
       {
         kind: "example",
@@ -497,34 +556,42 @@ export default function LessonOneScreen() {
     setI((prev) => Math.max(prev - 1, 0));
   };
 
-const resetLesson = async () => {
-  try {
-    // wipe stored progress
-    await AsyncStorage.multiRemove([INDEX_KEY, BRAND_KEY]);
+  const exitLesson = () => {
+    router.replace("/roadmap");
+  };
 
-    // force fresh start
-    await AsyncStorage.setItem(INDEX_KEY, "0");
-
-    // reset local state
-    setFavoriteBrand(null);
-    setChoice(null);
-    setChecked(false);
-    setI(0);
-  } catch (e) {
-    console.log("Error resetting lesson 1", e);
-  }
-};
+  const resetLesson = async () => {
+    try {
+      await AsyncStorage.multiRemove([INDEX_KEY, BRAND_KEY]);
+      await AsyncStorage.setItem(INDEX_KEY, "0");
+      setFavoriteBrand(null);
+      setChoice(null);
+      setChecked(false);
+      setI(0);
+    } catch (e) {
+      console.log("Error resetting lesson 1", e);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Progress */}
+      <View style={styles.topRow}>
+        <TouchableOpacity onPress={exitLesson} style={styles.lessonBackBtn}>
+          <Text style={styles.lessonBackText}>Back to roadmap</Text>
+        </TouchableOpacity>
+
+        <View style={styles.progressMeta}>
+          <Text style={styles.progressLabel}>Lesson 1</Text>
+          <Text style={styles.progressText}>
+            {i + 1}/{total}
+          </Text>
+        </View>
+      </View>
+
       <View style={styles.progressWrap}>
         <View style={styles.progressTrack}>
           <View style={[styles.progressFill, { width: `${progressPct}%` }]} />
         </View>
-        <Text style={styles.progressText}>
-          {i + 1}/{total}
-        </Text>
       </View>
 
       {/* Card */}
@@ -596,6 +663,20 @@ const resetLesson = async () => {
                 <Text style={styles.note}>{step.note}</Text>
               </>
             )}
+          </>
+        )}
+
+        {step.kind === "snapshot" && (
+          <>
+            <Text style={styles.body}>{step.eyebrow}</Text>
+            <View style={styles.snapshotCard}>
+              {step.bullets.map((bullet) => (
+                <View key={bullet} style={styles.snapshotRow}>
+                  <View style={styles.snapshotDot} />
+                  <Text style={styles.snapshotText}>{bullet}</Text>
+                </View>
+              ))}
+            </View>
           </>
         )}
 
@@ -711,6 +792,37 @@ const resetLesson = async () => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: NAVY, padding: 20 },
 
+  topRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 14,
+    gap: 12,
+  },
+  lessonBackBtn: {
+    borderWidth: 1,
+    borderColor: BORDER,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: "rgba(255,255,255,0.04)",
+  },
+  lessonBackText: {
+    color: WHITE,
+    fontWeight: "800",
+    fontSize: 13,
+  },
+  progressMeta: {
+    alignItems: "flex-end",
+    gap: 4,
+  },
+  progressLabel: {
+    color: GREEN,
+    fontWeight: "900",
+    fontSize: 12,
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+  },
   progressWrap: { marginBottom: 16 },
   progressTrack: {
     height: 10,
@@ -724,11 +836,9 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   progressText: {
-    marginTop: 8,
     color: MUTED,
     fontWeight: "900",
     fontSize: 12,
-    alignSelf: "flex-end",
   },
 
   card: {
@@ -808,6 +918,34 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
     fontWeight: "800",
+  },
+  snapshotCard: {
+    marginTop: 14,
+    borderRadius: 16,
+    backgroundColor: "rgba(126,214,165,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(126,214,165,0.2)",
+    padding: 14,
+    gap: 10,
+  },
+  snapshotRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+  },
+  snapshotDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: GREEN,
+    marginTop: 6,
+  },
+  snapshotText: {
+    flex: 1,
+    color: MUTED,
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: "700",
   },
 
   option: {
