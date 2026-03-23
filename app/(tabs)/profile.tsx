@@ -52,7 +52,7 @@ export default function ProfileSetupScreen() {
   useEffect(() => {
     Animated.timing(step1Anim, {
       toValue: 1,
-      duration: 450,
+      duration: 420,
       useNativeDriver: true,
     }).start();
   }, [step1Anim]);
@@ -92,7 +92,6 @@ export default function ProfileSetupScreen() {
       },
     ],
   });
-
 
   if (!isHydrated) {
     return (
@@ -164,7 +163,9 @@ export default function ProfileSetupScreen() {
         <Animated.View style={[styles.card, slideFade(step1Anim, 14)]}>
           <Text style={styles.stepLabel}>Step 1 of 3</Text>
           <Text style={styles.sectionTitle}>Basics you’ll use</Text>
-          <Text style={styles.helper}>Your name personalizes the app, and your email helps identify your account later.</Text>
+          <Text style={styles.helper}>
+            Your name personalizes the app, and your email helps identify your account later.
+          </Text>
 
           <Text style={styles.label}>First name</Text>
           <TextInput
@@ -198,7 +199,10 @@ export default function ProfileSetupScreen() {
         >
           <Text style={styles.stepLabel}>Step 2 of 3</Text>
           <Text style={styles.sectionTitle}>Pick your character</Text>
-          <Text style={styles.helper}>Inspired by the playful animal-avatar idea you mentioned, this character will follow you on your profile and roadmap.</Text>
+          <Text style={styles.helper}>
+            Inspired by the playful animal-avatar idea you mentioned, this character will follow you on
+            your profile and roadmap.
+          </Text>
 
           <View style={styles.characterGrid}>
             {characterOptions.map((character) => {
@@ -340,9 +344,9 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   title: {
+    color: WHITE,
     fontSize: 28,
     fontWeight: "800",
-    color: WHITE,
     marginBottom: 6,
   },
   subtitle: {
@@ -373,7 +377,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 16,
     marginBottom: 14,
-    boxShadow: "0px 4px 18px rgba(15, 23, 42, 0.12)",
     gap: 10,
   },
   lockedCard: {
@@ -470,6 +473,7 @@ const styles = StyleSheet.create({
   },
   knowledgeText: {
     fontWeight: "900",
+    marginTop: 4,
     color: NAVY,
   },
   knowledgeTextSelected: {
@@ -478,7 +482,7 @@ const styles = StyleSheet.create({
   saveButton: {
     backgroundColor: NAVY,
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: 14,
     alignItems: "center",
   },
   saveButtonText: {

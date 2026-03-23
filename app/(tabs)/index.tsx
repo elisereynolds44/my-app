@@ -1,98 +1,192 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+// app/(tabs)/index.tsx
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  Animated,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+const NAVY = "#0F172A";
+const WHITE = "#FFFFFF";
+const GREEN = "#7ED6A5";
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const full = "Invest-ish";
+  const [typed, setTyped] = useState("");
+  const [nextRoute, setNextRoute] = useState<string | null>(null);
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  // ⬇️ This controls whether we allow the auto-route to happen.
+  // If "demoResetDone" isn't true, we pause routing so you can tap the button.
+  const [allowRoute, setAllowRoute] = useState(false);
+
+  const opacity = useRef(new Animated.Value(1)).current;
+
+  const resetApp = async () => {
+    try {
+      await AsyncStorage.clear();
+      await AsyncStorage.setItem("demoResetDone", "true");
+      console.log("Storage cleared");
+
+      // Re-run routing logic after reset
+      setAllowRoute(true);
+    } catch (e) {
+      console.log("Error clearing storage", e);
+    }
+  };
+
+  // Decide whether we should allow routing immediately
+  useEffect(() => {
+    const checkDemoFlag = async () => {
+      try {
+        const done = await AsyncStorage.getItem("demoResetDone");
+        setAllowRoute(done === "true");
+      } catch {
+        setAllowRoute(false);
+      }
+    };
+    checkDemoFlag();
+  }, []);
+
+  // Decide where to go based on setupComplete (only once allowRoute is true)
+  useEffect(() => {
+    if (!allowRoute) return;
+
+    const decideRoute = async () => {
+      try {
+        const complete = await AsyncStorage.getItem("setupComplete");
+
+        if (complete === "true") {
+          setNextRoute("/roadmap"); // change if your main hub is different
+        } else {
+          setNextRoute("/(onboarding)/profile");
+        }
+      } catch (e) {
+        setNextRoute("/(onboarding)/profile");
+      }
+    };
+
+    decideRoute();
+  }, [allowRoute]);
+
+  // Typewriter animation
+  useEffect(() => {
+    let i = 0;
+    const id = setInterval(() => {
+      i += 1;
+      setTyped(full.slice(0, i));
+      if (i >= full.length) clearInterval(id);
+    }, 140);
+
+    return () => clearInterval(id);
+  }, []);
+
+  // After typing + pause → fade + route (only if allowRoute is true)
+  useEffect(() => {
+    if (!allowRoute) return;
+    if (typed !== full || !nextRoute) return;
+
+    const wait = setTimeout(() => {
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: 480,
+        useNativeDriver: true,
+      }).start(({ finished }) => {
+        if (!finished) return;
+        router.replace(nextRoute as any);
+      });
+    }, 1600);
+
+    return () => clearTimeout(wait);
+  }, [typed, full, opacity, nextRoute, allowRoute]);
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <Animated.View style={[styles.center, { opacity }]}>
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>ALPHA</Text>
+        </View>
+
+        <Text style={styles.title}>
+          {typed}
+          {typed.length < full.length ? "▍" : ""}
+        </Text>
+
+        {/* ⬇️ Only show this when routing is paused for demo reset */}
+        {!allowRoute && (
+          <View style={{ marginTop: 22 }}>
+            <Text style={styles.helperText}>
+              Demo mode: clear saved progress before recording.
+            </Text>
+
+            <TouchableOpacity onPress={resetApp} style={styles.resetBtn}>
+              <Text style={styles.resetBtnText}>Reset Demo</Text>
+            </TouchableOpacity>
+
+            <Text style={styles.tinyText}>
+              After reset, the app will route like a new user.
+            </Text>
+          </View>
+        )}
+      </Animated.View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: { flex: 1, backgroundColor: NAVY, paddingHorizontal: 20 },
+  center: { flex: 1, justifyContent: "center" },
+
+  badge: {
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(126,214,165,0.16)",
+    borderWidth: 1,
+    borderColor: "rgba(126,214,165,0.35)",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    marginBottom: 14,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  badgeText: {
+    color: GREEN,
+    fontWeight: "900",
+    fontSize: 12,
+    letterSpacing: 0.6,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+
+  title: {
+    color: WHITE,
+    fontSize: 48,
+    fontWeight: "900",
+    letterSpacing: 0.2,
+  },
+
+  helperText: {
+    color: "rgba(255,255,255,0.78)",
+    fontSize: 14,
+    marginBottom: 10,
+  },
+  resetBtn: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.22)",
+    backgroundColor: "rgba(255,255,255,0.08)",
+  },
+  resetBtnText: {
+    color: WHITE,
+    fontWeight: "800",
+    fontSize: 14,
+  },
+  tinyText: {
+    marginTop: 8,
+    color: "rgba(255,255,255,0.55)",
+    fontSize: 12,
   },
 });
