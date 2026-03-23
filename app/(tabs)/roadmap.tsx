@@ -23,55 +23,55 @@ const MODULES = [
   },
   {
     id: "lesson-2",
-    route: "/lesson-2",
+    route: null,
     title: "Module 2: Markets & movements",
     description: "Why prices change, and why it’s not random.",
   },
   {
     id: "lesson-3",
-    route: "/lesson-3",
+    route: null,
     title: "Module 3: Risk & reality",
     description: "How things go wrong, and how people manage that.",
   },
   {
     id: "lesson-4",
-    route: "/lesson-4",
+    route: null,
     title: "Module 4: Your first strategy",
     description: "Making choices that actually fit you.",
   },
   {
     id: "lesson-5",
-    route: "/lesson-5",
+    route: null,
     title: "Module 5: ETFs & diversification",
     description: "The simplest way to not bet everything on one stock.",
   },
   {
     id: "lesson-6",
-    route: "/lesson-6",
+    route: null,
     title: "Module 6: Time horizon",
     description: "When you need the money changes everything.",
   },
   {
     id: "lesson-7",
-    route: "/lesson-7",
+    route: null,
     title: "Module 7: Tax basics",
     description: "The stuff nobody explains until it hurts.",
   },
   {
     id: "lesson-8",
-    route: "/lesson-8",
+    route: null,
     title: "Module 8: Roth IRA & 401(k)",
     description: "Future-you accounts and how they work.",
   },
   {
     id: "lesson-9",
-    route: "/lesson-9",
+    route: null,
     title: "Module 9: Starter portfolio",
     description: "A simple structure you can understand and explain.",
   },
   {
     id: "lesson-10",
-    route: "/lesson-10",
+    route: null,
     title: "Module 10: Staying consistent",
     description: "Habits that beat hype, even when markets are weird.",
   },
@@ -110,7 +110,7 @@ export default function RoadmapScreen() {
         </Text>
 
         {MODULES.map((module, i) => {
-          const isReady = i <= unlockedIndex;
+          const isReady = i <= unlockedIndex && Boolean(module.route);
           const isCompleted = module.id === "lesson-1" && completedLesson1;
 
           return (

@@ -1,14 +1,3 @@
-<<<<<<< HEAD
-import { Tabs } from 'expo-router';
-import React from 'react';
-
-export default function TabLayout() {
-  return (
-    <Tabs screenOptions={{ headerShown: false }}>
-      <Tabs.Screen name="index" options={{ title: 'Home' }} />
-      <Tabs.Screen name="explore" options={{ title: 'Explore' }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
-=======
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import React from "react";
@@ -22,7 +11,6 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={({ route }) => ({
         headerShown: false,
-
         tabBarActiveTintColor: GREEN,
         tabBarInactiveTintColor: MUTED,
         tabBarStyle: {
@@ -35,7 +23,6 @@ export default function TabsLayout() {
           fontWeight: "700",
           fontSize: 12,
         },
-
         tabBarIcon: ({ color, size }) => {
           let iconName: keyof typeof Ionicons.glyphMap = "home";
 
@@ -52,7 +39,6 @@ export default function TabsLayout() {
       <Tabs.Screen name="roadmap" options={{ title: "Roadmap" }} />
       <Tabs.Screen name="competition" options={{ title: "Compete" }} />
       <Tabs.Screen name="profile" options={{ title: "Profile" }} />
->>>>>>> main
     </Tabs>
   );
 }

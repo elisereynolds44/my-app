@@ -1,5 +1,3 @@
-// app/(tabs)/index.tsx
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -7,71 +5,29 @@ import {
   SafeAreaView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
+
+import { useProfile } from "@/components/profile-context";
 
 const NAVY = "#0F172A";
 const WHITE = "#FFFFFF";
 const GREEN = "#7ED6A5";
 
 export default function HomeScreen() {
+  const { isHydrated, profile } = useProfile();
   const full = "Invest-ish";
   const [typed, setTyped] = useState("");
   const [nextRoute, setNextRoute] = useState<string | null>(null);
-
-  // ⬇️ This controls whether we allow the auto-route to happen.
-  // If "demoResetDone" isn't true, we pause routing so you can tap the button.
-  const [allowRoute, setAllowRoute] = useState(false);
-
   const opacity = useRef(new Animated.Value(1)).current;
 
-  const resetApp = async () => {
-    try {
-      await AsyncStorage.clear();
-      await AsyncStorage.setItem("demoResetDone", "true");
-      console.log("Storage cleared");
-
-      // Re-run routing logic after reset
-      setAllowRoute(true);
-    } catch (e) {
-      console.log("Error clearing storage", e);
+  useEffect(() => {
+    if (!isHydrated) {
+      return;
     }
-  };
 
-  // Decide whether we should allow routing immediately
-  useEffect(() => {
-    const checkDemoFlag = async () => {
-      try {
-        const done = await AsyncStorage.getItem("demoResetDone");
-        setAllowRoute(done === "true");
-      } catch {
-        setAllowRoute(false);
-      }
-    };
-    checkDemoFlag();
-  }, []);
-
-  // Decide where to go based on setupComplete (only once allowRoute is true)
-  useEffect(() => {
-    if (!allowRoute) return;
-
-    const decideRoute = async () => {
-      try {
-        const complete = await AsyncStorage.getItem("setupComplete");
-
-        if (complete === "true") {
-          setNextRoute("/roadmap"); // change if your main hub is different
-        } else {
-          setNextRoute("/(onboarding)/profile");
-        }
-      } catch (e) {
-        setNextRoute("/(onboarding)/profile");
-      }
-    };
-
-    decideRoute();
-  }, [allowRoute]);
+    setNextRoute(profile ? "/roadmap" : "/welcome");
+  }, [isHydrated, profile]);
 
   // Typewriter animation
   useEffect(() => {
@@ -85,9 +41,7 @@ export default function HomeScreen() {
     return () => clearInterval(id);
   }, []);
 
-  // After typing + pause → fade + route (only if allowRoute is true)
   useEffect(() => {
-    if (!allowRoute) return;
     if (typed !== full || !nextRoute) return;
 
     const wait = setTimeout(() => {
@@ -102,7 +56,7 @@ export default function HomeScreen() {
     }, 1600);
 
     return () => clearTimeout(wait);
-  }, [typed, full, opacity, nextRoute, allowRoute]);
+  }, [typed, full, opacity, nextRoute]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -115,23 +69,6 @@ export default function HomeScreen() {
           {typed}
           {typed.length < full.length ? "▍" : ""}
         </Text>
-
-        {/* ⬇️ Only show this when routing is paused for demo reset */}
-        {!allowRoute && (
-          <View style={{ marginTop: 22 }}>
-            <Text style={styles.helperText}>
-              Demo mode: clear saved progress before recording.
-            </Text>
-
-            <TouchableOpacity onPress={resetApp} style={styles.resetBtn}>
-              <Text style={styles.resetBtnText}>Reset Demo</Text>
-            </TouchableOpacity>
-
-            <Text style={styles.tinyText}>
-              After reset, the app will route like a new user.
-            </Text>
-          </View>
-        )}
       </Animated.View>
     </SafeAreaView>
   );
@@ -163,30 +100,5 @@ const styles = StyleSheet.create({
     fontSize: 48,
     fontWeight: "900",
     letterSpacing: 0.2,
-  },
-
-  helperText: {
-    color: "rgba(255,255,255,0.78)",
-    fontSize: 14,
-    marginBottom: 10,
-  },
-  resetBtn: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.22)",
-    backgroundColor: "rgba(255,255,255,0.08)",
-  },
-  resetBtnText: {
-    color: WHITE,
-    fontWeight: "800",
-    fontSize: 14,
-  },
-  tinyText: {
-    marginTop: 8,
-    color: "rgba(255,255,255,0.55)",
-    fontSize: 12,
   },
 });
