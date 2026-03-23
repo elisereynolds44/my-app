@@ -10,6 +10,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(onboarding)/welcome" />
         <Stack.Screen name="lesson-1" />
+        <Stack.Screen name="simulation-1" />
         <Stack.Screen name="modal" options={{ presentation: "modal" }} />
       </Stack>
     </ProfileProvider>

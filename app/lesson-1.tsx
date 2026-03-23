@@ -25,10 +25,11 @@ type LessonStep =
     }
   | {
       kind: "visual";
+      display: "line" | "metrics" | "ticker";
       kicker: string;
       title: string;
       caption: (brand: string) => string;
-      bars: { label: string; value: number }[];
+      data: { label: string; value: number }[];
       note?: string;
     }
   | {
@@ -52,6 +53,7 @@ type LessonStep =
 
 const BRAND_KEY = "lesson1Brand";
 const INDEX_KEY = "lesson1SlideIndex";
+const LAST_BRAND_KEY = "lesson1LastBrand";
 
 export default function LessonOneScreen() {
   const params = useLocalSearchParams<{ firstName?: string }>();
@@ -165,11 +167,12 @@ export default function LessonOneScreen() {
       },
       {
         kind: "visual",
+        display: "line",
         kicker: "GRAPH",
         title: "This is the kind of revenue trend you want to notice.",
         caption: (brand: string) =>
           `If ${brand} looked like this over four quarters on Yahoo Finance, you would say demand appears to be rising.`,
-        bars: [
+        data: [
           { label: "Q1", value: 40 },
           { label: "Q2", value: 54 },
           { label: "Q3", value: 71 },
@@ -211,11 +214,12 @@ export default function LessonOneScreen() {
       },
       {
         kind: "visual",
+        display: "metrics",
         kicker: "GRAPH",
         title: "Revenue and profit are not the same picture.",
         caption: (brand: string) =>
           `A ${brand} chart could show strong sales while profit stays weaker because costs are eating into the gains.`,
-        bars: [
+        data: [
           { label: "Revenue", value: 90 },
           { label: "Profit", value: 46 },
           { label: "Costs", value: 72 },
@@ -257,11 +261,12 @@ export default function LessonOneScreen() {
       },
       {
         kind: "visual",
+        display: "ticker",
         kicker: "GRAPH",
         title: "The chart can move before the report comes out.",
         caption: (brand: string) =>
           `If investors expect ${brand} to post a huge quarter, the stock can already rise before earnings day arrives.`,
-        bars: [
+        data: [
           { label: "Last report", value: 36 },
           { label: "Expectation", value: 82 },
           { label: "Current price", value: 74 },
@@ -517,7 +522,10 @@ export default function LessonOneScreen() {
   useEffect(() => {
     const saveBrand = async () => {
       try {
-        if (favoriteBrand) await AsyncStorage.setItem(BRAND_KEY, favoriteBrand);
+        if (favoriteBrand) {
+          await AsyncStorage.setItem(BRAND_KEY, favoriteBrand);
+          await AsyncStorage.setItem(LAST_BRAND_KEY, favoriteBrand);
+        }
       } catch (e) {
         console.log("Error saving lesson1Brand", e);
       }
@@ -641,21 +649,142 @@ export default function LessonOneScreen() {
           <>
             <Text style={styles.body}>{step.caption(brand)}</Text>
             <View style={{ height: 14 }} />
-            <View style={styles.chartWrap}>
-              {step.bars.map((b) => (
-                <View key={b.label} style={styles.barCol}>
-                  <View style={styles.barTrack}>
-                    <View
-                      style={[
-                        styles.barFill,
-                        { height: `${Math.min(100, Math.max(0, b.value))}%` },
-                      ]}
-                    />
+            {step.display === "line" && (
+              <View style={styles.lineCard}>
+                <View style={styles.lineGrid}>
+                  <View style={styles.lineGridRule} />
+                  <View style={styles.lineGridRule} />
+                  <View style={styles.lineGridRule} />
+                  <View style={styles.lineTrack}>
+                    {step.data.map((point, index) => {
+                      const leftPct =
+                        step.data.length === 1 ? 0 : (index / (step.data.length - 1)) * 100;
+                      const bottomPct = Math.min(92, Math.max(10, point.value));
+                      const next = step.data[index + 1];
+                      const nextBottomPct = next
+                        ? Math.min(92, Math.max(10, next.value))
+                        : null;
+                      const widthPct =
+                        next && step.data.length > 1 ? 100 / (step.data.length - 1) : 0;
+
+                      return (
+                        <React.Fragment key={point.label}>
+                          {nextBottomPct !== null && (
+                            <View
+                              style={[
+                                styles.lineSegment,
+                                {
+                                  left: `${leftPct}%`,
+                                  bottom: `${bottomPct}%`,
+                                  width: `${widthPct}%`,
+                                  transform: [
+                                    {
+                                      rotate: `${(nextBottomPct - bottomPct) * 0.55}deg`,
+                                    },
+                                  ],
+                                },
+                              ]}
+                            />
+                          )}
+                          <View
+                            style={[
+                              styles.linePoint,
+                              {
+                                left: `${leftPct}%`,
+                                bottom: `${bottomPct}%`,
+                              },
+                            ]}
+                          />
+                          <Text
+                            style={[
+                              styles.lineValue,
+                              {
+                                left: `${leftPct}%`,
+                                bottom: `${bottomPct + 10}%`,
+                              },
+                            ]}
+                          >
+                            {point.value}
+                          </Text>
+                        </React.Fragment>
+                      );
+                    })}
                   </View>
-                  <Text style={styles.barLabel}>{b.label}</Text>
                 </View>
-              ))}
-            </View>
+                <View style={styles.lineLabels}>
+                  {step.data.map((point) => (
+                    <Text key={point.label} style={styles.lineLabel}>
+                      {point.label}
+                    </Text>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {step.display === "metrics" && (
+              <View style={styles.metricStack}>
+                {step.data.map((item) => (
+                  <View key={item.label} style={styles.metricRow}>
+                    <View>
+                      <Text style={styles.metricLabel}>{item.label}</Text>
+                      <Text style={styles.metricSubtext}>
+                        {item.value >= 80
+                          ? "Very strong"
+                          : item.value >= 60
+                            ? "Solid"
+                            : "Needs work"}
+                      </Text>
+                    </View>
+                    <View style={styles.metricGauge}>
+                      <View
+                        style={[
+                          styles.metricGaugeFill,
+                          { width: `${Math.min(100, Math.max(0, item.value))}%` },
+                        ]}
+                      />
+                    </View>
+                    <Text style={styles.metricValue}>{item.value}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {step.display === "ticker" && (
+              <View style={styles.tickerCard}>
+                <View style={styles.tickerHeader}>
+                  <View>
+                    <Text style={styles.tickerSymbol}>MKT SNAPSHOT</Text>
+                    <Text style={styles.tickerCompany}>{brand}</Text>
+                  </View>
+                  <Text style={styles.tickerMove}>+8.4%</Text>
+                </View>
+
+                <View style={styles.tickerMiniChart}>
+                  {step.data.map((point, index) => (
+                    <View key={point.label} style={styles.tickerCol}>
+                      <View
+                        style={[
+                          styles.tickerBar,
+                          { height: `${Math.min(100, Math.max(16, point.value))}%` },
+                        ]}
+                      />
+                      <Text style={styles.tickerBarLabel}>{point.label}</Text>
+                    </View>
+                  ))}
+                </View>
+
+                <View style={styles.tickerFooter}>
+                  <View>
+                    <Text style={styles.tickerMetaLabel}>Expectation</Text>
+                    <Text style={styles.tickerMetaValue}>Very high</Text>
+                  </View>
+                  <View>
+                    <Text style={styles.tickerMetaLabel}>What to watch</Text>
+                    <Text style={styles.tickerMetaValue}>Can reality beat hype?</Text>
+                  </View>
+                </View>
+              </View>
+            )}
 
             {!!step.note && (
               <>
@@ -777,11 +906,14 @@ export default function LessonOneScreen() {
               await AsyncStorage.setItem("completedLesson1", "true");
               await AsyncStorage.removeItem(INDEX_KEY);
               await AsyncStorage.removeItem(BRAND_KEY);
-              router.replace("/roadmap");
+              if (favoriteBrand) {
+                await AsyncStorage.setItem(LAST_BRAND_KEY, favoriteBrand);
+              }
+              router.replace("/simulation-1");
             }}
             style={styles.primaryBtn}
           >
-            <Text style={styles.primaryText}>Back to roadmap</Text>
+            <Text style={styles.primaryText}>Start simulation</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -892,27 +1024,170 @@ const styles = StyleSheet.create({
   },
   resetText: { color: WHITE, fontWeight: "900", fontSize: 12 },
 
-  chartWrap: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
-    paddingVertical: 6,
-    marginTop: 4,
-  },
-  barCol: { width: "30%", alignItems: "center" },
-  barTrack: {
-    width: "100%",
-    height: 120,
-    borderRadius: 14,
+  lineCard: {
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: BORDER,
     backgroundColor: "rgba(255,255,255,0.03)",
-    overflow: "hidden",
-    justifyContent: "flex-end",
+    padding: 14,
   },
-  barFill: { width: "100%", backgroundColor: "rgba(126,214,165,0.85)" },
-  barLabel: { color: MUTED, marginTop: 8, fontWeight: "900", fontSize: 12 },
-
+  lineGrid: {
+    height: 170,
+    justifyContent: "space-between",
+  },
+  lineGridRule: {
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.08)",
+  },
+  lineTrack: {
+    ...StyleSheet.absoluteFillObject,
+    top: 8,
+    bottom: 20,
+    left: 8,
+    right: 8,
+  },
+  lineSegment: {
+    position: "absolute",
+    height: 3,
+    backgroundColor: GREEN,
+    borderRadius: 999,
+  },
+  linePoint: {
+    position: "absolute",
+    width: 12,
+    height: 12,
+    borderRadius: 999,
+    backgroundColor: WHITE,
+    borderWidth: 3,
+    borderColor: GREEN,
+    marginLeft: -6,
+    marginBottom: -6,
+  },
+  lineValue: {
+    position: "absolute",
+    color: WHITE,
+    fontWeight: "900",
+    fontSize: 12,
+    marginLeft: -12,
+  },
+  lineLabels: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 8,
+  },
+  lineLabel: {
+    color: MUTED,
+    fontSize: 12,
+    fontWeight: "900",
+  },
+  metricStack: {
+    gap: 12,
+  },
+  metricRow: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: BORDER,
+    backgroundColor: "rgba(255,255,255,0.03)",
+    padding: 14,
+    gap: 10,
+  },
+  metricLabel: {
+    color: WHITE,
+    fontSize: 15,
+    fontWeight: "900",
+  },
+  metricSubtext: {
+    color: MUTED,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  metricGauge: {
+    height: 10,
+    borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.03)",
+    overflow: "hidden",
+  },
+  metricGaugeFill: {
+    height: "100%",
+    borderRadius: 999,
+    backgroundColor: "rgba(126,214,165,0.9)",
+  },
+  metricValue: {
+    color: WHITE,
+    fontWeight: "900",
+    fontSize: 20,
+  },
+  tickerCard: {
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "rgba(126,214,165,0.24)",
+    backgroundColor: "rgba(126,214,165,0.07)",
+    padding: 14,
+    gap: 14,
+  },
+  tickerHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  tickerSymbol: {
+    color: GREEN,
+    fontSize: 11,
+    fontWeight: "900",
+    letterSpacing: 0.7,
+  },
+  tickerCompany: {
+    color: WHITE,
+    fontSize: 18,
+    fontWeight: "900",
+    marginTop: 4,
+  },
+  tickerMove: {
+    color: GREEN,
+    fontSize: 22,
+    fontWeight: "900",
+  },
+  tickerMiniChart: {
+    height: 88,
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 10,
+  },
+  tickerCol: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 8,
+  },
+  tickerBar: {
+    width: "100%",
+    borderRadius: 12,
+    backgroundColor: "rgba(126,214,165,0.85)",
+    minHeight: 18,
+  },
+  tickerBarLabel: {
+    color: MUTED,
+    fontSize: 11,
+    fontWeight: "800",
+    textAlign: "center",
+  },
+  tickerFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  tickerMetaLabel: {
+    color: "rgba(203,213,225,0.72)",
+    fontSize: 11,
+    fontWeight: "800",
+    textTransform: "uppercase",
+  },
+  tickerMetaValue: {
+    color: WHITE,
+    fontSize: 13,
+    fontWeight: "800",
+    marginTop: 4,
+  },
   note: {
     color: "rgba(203,213,225,0.65)",
     fontSize: 12,

@@ -79,14 +79,19 @@ const MODULES = [
 
 export default function RoadmapScreen() {
   const [completedLesson1, setCompletedLesson1] = useState(false);
+  const [completedSimulation1, setCompletedSimulation1] = useState(false);
 
   // Refresh when returning to this screen
   useFocusEffect(
     useCallback(() => {
       const load = async () => {
         try {
-          const done = await AsyncStorage.getItem("completedLesson1");
-          setCompletedLesson1(done === "true");
+          const [lessonDone, simulationDone] = await Promise.all([
+            AsyncStorage.getItem("completedLesson1"),
+            AsyncStorage.getItem("completedSimulation1"),
+          ]);
+          setCompletedLesson1(lessonDone === "true");
+          setCompletedSimulation1(simulationDone === "true");
         } catch (e) {
           console.log("Error loading completedLesson1", e);
         }
@@ -98,8 +103,8 @@ export default function RoadmapScreen() {
 
   // Unlock Module 2 when Lesson 1 complete
   const unlockedIndex = useMemo(() => {
-    return completedLesson1 ? 1 : 0;
-  }, [completedLesson1]);
+    return completedSimulation1 ? 1 : 0;
+  }, [completedSimulation1]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -111,7 +116,17 @@ export default function RoadmapScreen() {
 
         {MODULES.map((module, i) => {
           const isReady = i <= unlockedIndex && Boolean(module.route);
-          const isCompleted = module.id === "lesson-1" && completedLesson1;
+          const isModuleOne = module.id === "lesson-1";
+          const isCompleted = isModuleOne && completedSimulation1;
+          const isLessonDone = isModuleOne && completedLesson1;
+          const actionRoute = isModuleOne && isLessonDone && !completedSimulation1
+            ? "/simulation-1"
+            : module.route;
+          const actionLabel = isModuleOne && isLessonDone && !completedSimulation1
+            ? "Start simulation"
+            : isCompleted
+              ? "Review module"
+              : "Start module";
 
           return (
             <View key={module.id} style={styles.card}>
@@ -138,15 +153,19 @@ export default function RoadmapScreen() {
                 {module.description}
               </Text>
 
-              {isReady ? (
+              {isModuleOne && isLessonDone && !completedSimulation1 ? (
+                <Text style={styles.helperText}>
+                  Lesson complete. Finish the simulation to complete Module 1.
+                </Text>
+              ) : null}
+
+              {(isReady || (isModuleOne && isLessonDone && !completedSimulation1)) ? (
                 <TouchableOpacity
                   accessibilityRole="button"
                   style={styles.button}
-                  onPress={() => router.push(module.route as any)}
+                  onPress={() => router.push(actionRoute as any)}
                 >
-                  <Text style={styles.buttonText}>
-                    {isCompleted ? "Review module" : "Start module"}
-                  </Text>
+                  <Text style={styles.buttonText}>{actionLabel}</Text>
                 </TouchableOpacity>
               ) : (
                 <View style={styles.lockedButton}>
@@ -224,6 +243,11 @@ const styles = StyleSheet.create({
     color: "#334155",
     fontSize: 14,
     lineHeight: 20,
+  },
+  helperText: {
+    color: "#475569",
+    fontSize: 13,
+    lineHeight: 18,
   },
   button: {
     backgroundColor: NAVY,
