@@ -1,19 +1,18 @@
-import { Picker } from "@react-native-picker/picker";
 import { router } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-    Alert,
-    Animated,
-    Platform,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  Animated,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
-type Knowledge = "Beginner" | "Intermediate" | "Advanced";
+import { CharacterOption, Knowledge, useProfile } from "@/components/profile-context";
 
 const NAVY = "#0F172A";
 const WHITE = "#FFFFFF";
@@ -21,51 +20,35 @@ const GREEN = "#7ED6A5";
 const MUTED = "#CBD5E1";
 const BORDER = "#E2E8F0";
 const SOFT_RED = "#F87171";
+const PANEL = "#F8FAFC";
 
 export default function ProfileSetupScreen() {
-  // Form state
-  const [school, setSchool] = useState<string | null>(null);
-  const [email, setEmail] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [age, setAge] = useState("");
-  const [knowledge, setKnowledge] = useState<Knowledge>("Beginner");
+  const { characterOptions, completeProfile, isHydrated, profile, selectedCharacter } = useProfile();
 
-  // Minimal starter list (keep it light for Sprint 0)
-  const schools = useMemo(
-    () => [
-      { label: "Select your school…", value: null },
-      { label: "Westmont College", value: "westmont" },
-      { label: "UCLA", value: "ucla" },
-      { label: "University of Texas at Austin", value: "ut-austin" },
-      { label: "Stanford University", value: "stanford" },
-      { label: "Other (search coming soon)", value: "other" },
-    ],
-    []
-  );
+  const [email, setEmail] = useState(profile?.email ?? "");
+  const [firstName, setFirstName] = useState(profile?.firstName ?? "");
+  const [knowledge, setKnowledge] = useState<Knowledge>(profile?.knowledge ?? "Beginner");
+  const [characterId, setCharacterId] = useState(profile?.characterId ?? "");
+  const [isEditing, setIsEditing] = useState(!profile);
 
-  const emailIsEdu = useMemo(() => {
+  const emailLooksValid = useMemo(() => {
     const trimmed = email.trim().toLowerCase();
-    return /^[^\s@]+@[^\s@]+\.edu$/.test(trimmed);
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
   }, [email]);
 
-  // Gating
-  const canEnterEmail = !!school;
-  const canEnterDetails = !!school && emailIsEdu;
+  const canChooseCharacter = firstName.trim().length > 0 && emailLooksValid;
+  const canChooseExperience = canChooseCharacter && characterId !== "";
 
-  // Progress (Step 1–3)
   const currentStep = useMemo(() => {
-    if (!school) return 1;
-    if (!emailIsEdu) return 2;
+    if (!firstName.trim() || !emailLooksValid) return 1;
+    if (!characterId) return 2;
     return 3;
-  }, [school, emailIsEdu]);
+  }, [characterId, emailLooksValid, firstName]);
 
-  // ---------------- Animations ----------------
-  const step1Anim = useRef(new Animated.Value(0)).current; // mount entrance
-  const step2Anim = useRef(new Animated.Value(0)).current; // unlock entrance
-  const step3Anim = useRef(new Animated.Value(0)).current; // unlock entrance
+  const step1Anim = useRef(new Animated.Value(0)).current;
+  const step2Anim = useRef(new Animated.Value(0)).current;
+  const step3Anim = useRef(new Animated.Value(0)).current;
 
-  // Mount: show step 1 nicely
   useEffect(() => {
     Animated.timing(step1Anim, {
       toValue: 1,
@@ -74,9 +57,8 @@ export default function ProfileSetupScreen() {
     }).start();
   }, [step1Anim]);
 
-  // Unlock step 2 when school selected
   useEffect(() => {
-    if (canEnterEmail) {
+    if (canChooseCharacter) {
       Animated.timing(step2Anim, {
         toValue: 1,
         duration: 420,
@@ -85,11 +67,10 @@ export default function ProfileSetupScreen() {
     } else {
       step2Anim.setValue(0);
     }
-  }, [canEnterEmail, step2Anim]);
+  }, [canChooseCharacter, step2Anim]);
 
-  // Unlock step 3 when edu email valid
   useEffect(() => {
-    if (canEnterDetails) {
+    if (canChooseExperience) {
       Animated.timing(step3Anim, {
         toValue: 1,
         duration: 420,
@@ -98,9 +79,8 @@ export default function ProfileSetupScreen() {
     } else {
       step3Anim.setValue(0);
     }
-  }, [canEnterDetails, step3Anim]);
+  }, [canChooseExperience, step3Anim]);
 
-  // Helpers to turn an Animated.Value into “slide up + fade”
   const slideFade = (anim: Animated.Value, yFrom = 10) => ({
     opacity: anim,
     transform: [
@@ -113,154 +93,156 @@ export default function ProfileSetupScreen() {
     ],
   });
 
-function saveProfile() {
-  if (!school) {
-    Alert.alert("Select your school first.");
-    return;
-  }
-  if (!emailIsEdu) {
-    Alert.alert("Please enter a valid .edu email.");
-    return;
-  }
-  if (!firstName.trim() || !lastName.trim()) {
-    Alert.alert("Please enter your first and last name.");
-    return;
+
+  if (!isHydrated) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingState}>
+          <Text style={styles.loadingTitle}>Loading your profile…</Text>
+          <Text style={styles.loadingSubtitle}>Pulling in your saved progress now.</Text>
+        </View>
+      </SafeAreaView>
+    );
   }
 
-  const ageNum = Number(age);
-  if (!age.trim() || Number.isNaN(ageNum)) {
-    Alert.alert("Please enter a valid age.");
-    return;
+  function saveProfile() {
+    if (!firstName.trim()) {
+      Alert.alert("Please add your first name.");
+      return;
+    }
+
+    if (!emailLooksValid) {
+      Alert.alert("Please enter a valid email.");
+      return;
+    }
+
+    if (!characterId) {
+      Alert.alert("Please choose a character.");
+      return;
+    }
+
+    completeProfile({
+      characterId,
+      email: email.trim().toLowerCase(),
+      firstName: firstName.trim(),
+      knowledge,
+    });
+
+    setIsEditing(false);
+    router.replace("/roadmap");
   }
 
-router.replace("/roadmap");
-}
+  if (profile && !isEditing) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScrollView contentContainerStyle={styles.contentContainer}>
+          <Text style={styles.title}>Your profile</Text>
+          <Text style={styles.subtitle}>Everything here should help your learning journey feel personal.</Text>
+
+          <View style={styles.summaryCard}>
+            <CharacterBadge character={selectedCharacter} size="large" />
+            <Text style={styles.summaryName}>{profile.firstName}</Text>
+            <Text style={styles.summaryEmail}>{profile.email}</Text>
+            <Text style={styles.summaryMeta}>Starting level: {profile.knowledge}</Text>
+            <TouchableOpacity style={styles.secondaryButton} onPress={() => setIsEditing(true)}>
+              <Text style={styles.secondaryButtonText}>Edit profile</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Set up your profile</Text>
-      <Text style={styles.subtitle}>Quick setup, then you’re in.</Text>
+      <ScrollView contentContainerStyle={styles.contentContainer}>
+        <Text style={styles.title}>Set up your profile</Text>
+        <Text style={styles.subtitle}>We only ask for what you’ll actually use as you learn.</Text>
 
-      <ProgressDots currentStep={currentStep} totalSteps={3} />
+        <ProgressDots currentStep={currentStep} totalSteps={3} />
 
-      {/* Step 1 */}
-      <Animated.View style={[styles.card, slideFade(step1Anim, 14)]}>
-        <Text style={styles.stepLabel}>Step 1 of 3</Text>
-        <Text style={styles.sectionTitle}>Select your school</Text>
+        <Animated.View style={[styles.card, slideFade(step1Anim, 14)]}>
+          <Text style={styles.stepLabel}>Step 1 of 3</Text>
+          <Text style={styles.sectionTitle}>Basics you’ll use</Text>
+          <Text style={styles.helper}>Your name personalizes the app, and your email helps identify your account later.</Text>
 
-        <View style={styles.pickerWrapper}>
-          <Picker
-            selectedValue={school}
-            onValueChange={(val) => setSchool(val)}
-            mode={Platform.OS === "ios" ? "dialog" : "dropdown"}
-            style={styles.picker}
-          >
-            {schools.map((s) => (
-              <Picker.Item
-                key={String(s.value)}
-                label={s.label}
-                value={s.value}
-              />
-            ))}
-          </Picker>
-        </View>
-      </Animated.View>
+          <Text style={styles.label}>First name</Text>
+          <TextInput
+            value={firstName}
+            onChangeText={setFirstName}
+            placeholder="What should we call you?"
+            placeholderTextColor="#94A3B8"
+            style={styles.input}
+          />
 
-      {/* Step 2 */}
-      {/* Keep it visible but “locked” until Step 1 done, then animate it in */}
-      <Animated.View
-        style={[
-          styles.card,
-          canEnterEmail ? slideFade(step2Anim, 14) : { opacity: 0.55 },
-        ]}
-      >
-        <Text style={styles.stepLabel}>Step 2 of 3</Text>
-        <Text style={styles.sectionTitle}>School email</Text>
-        <Text style={styles.helper}>
-          Must end in <Text style={styles.bold}>.edu</Text>
-        </Text>
+          <Text style={[styles.label, styles.spacedLabel]}>Email</Text>
+          <TextInput
+            value={email}
+            onChangeText={setEmail}
+            placeholder="you@example.com"
+            placeholderTextColor="#94A3B8"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            style={styles.input}
+          />
 
-        <TextInput
-          value={email}
-          onChangeText={setEmail}
-          placeholder="you@school.edu"
-          placeholderTextColor="#94A3B8"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          style={[styles.input, !canEnterEmail && styles.inputDisabled]}
-          editable={canEnterEmail}
-        />
+          {!!email.trim() && (
+            <Text style={[styles.validation, emailLooksValid ? styles.ok : styles.bad]}>
+              {emailLooksValid ? "Looks good ✅" : "Please use a valid email address"}
+            </Text>
+          )}
+        </Animated.View>
 
-        {!!email.trim() && (
-          <Text style={[styles.validation, emailIsEdu ? styles.ok : styles.bad]}>
-            {emailIsEdu ? "Looks good ✅" : "Needs to end in .edu"}
-          </Text>
-        )}
-      </Animated.View>
+        <Animated.View
+          style={[styles.card, canChooseCharacter ? slideFade(step2Anim, 14) : styles.lockedCard]}
+        >
+          <Text style={styles.stepLabel}>Step 2 of 3</Text>
+          <Text style={styles.sectionTitle}>Pick your character</Text>
+          <Text style={styles.helper}>Inspired by the playful animal-avatar idea you mentioned, this character will follow you on your profile and roadmap.</Text>
 
-      {/* Step 3 */}
-      <Animated.View
-        style={[
-          styles.card,
-          canEnterDetails ? slideFade(step3Anim, 14) : { opacity: 0.55 },
-        ]}
-      >
-        <Text style={styles.stepLabel}>Step 3 of 3</Text>
-        <Text style={styles.sectionTitle}>About you</Text>
+          <View style={styles.characterGrid}>
+            {characterOptions.map((character) => {
+              const selected = character.id === characterId;
 
-        <View style={styles.row}>
-          <View style={styles.half}>
-            <Text style={styles.label}>First name</Text>
-            <TextInput
-              value={firstName}
-              onChangeText={setFirstName}
-              placeholder="First"
-              placeholderTextColor="#94A3B8"
-              style={[styles.input, !canEnterDetails && styles.inputDisabled]}
-              editable={canEnterDetails}
-            />
+              return (
+                <TouchableOpacity
+                  key={character.id}
+                  onPress={() => setCharacterId(character.id)}
+                  disabled={!canChooseCharacter}
+                  style={[
+                    styles.characterCard,
+                    { borderColor: selected ? character.accent : BORDER },
+                    selected && { backgroundColor: `${character.accent}18` },
+                    !canChooseCharacter && styles.buttonDisabled,
+                  ]}
+                >
+                  <CharacterBadge character={character} size="small" />
+                  <Text style={styles.characterLabel}>{character.label}</Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
+        </Animated.View>
 
-          <View style={styles.half}>
-            <Text style={styles.label}>Last name</Text>
-            <TextInput
-              value={lastName}
-              onChangeText={setLastName}
-              placeholder="Last"
-              placeholderTextColor="#94A3B8"
-              style={[styles.input, !canEnterDetails && styles.inputDisabled]}
-              editable={canEnterDetails}
-            />
-          </View>
-        </View>
+        <Animated.View
+          style={[styles.card, canChooseExperience ? slideFade(step3Anim, 14) : styles.lockedCard]}
+        >
+          <Text style={styles.stepLabel}>Step 3 of 3</Text>
+          <Text style={styles.sectionTitle}>Where are you starting?</Text>
+          <Text style={styles.helper}>This helps us pace the roadmap and lessons appropriately.</Text>
 
-        <Text style={[styles.label, { marginTop: 10 }]}>Age</Text>
-        <TextInput
-          value={age}
-          onChangeText={setAge}
-          placeholder="e.g., 21"
-          placeholderTextColor="#94A3B8"
-          keyboardType="number-pad"
-          style={[styles.input, !canEnterDetails && styles.inputDisabled]}
-          editable={canEnterDetails}
-        />
-
-        <Text style={[styles.label, { marginTop: 12 }]}>
-          Previous knowledge
-        </Text>
-        <View style={styles.knowledgeRow}>
-          {(["Beginner", "Intermediate", "Advanced"] as Knowledge[]).map(
-            (level) => {
+          <View style={styles.knowledgeRow}>
+            {(["Beginner", "Intermediate", "Advanced"] as Knowledge[]).map((level) => {
               const selected = knowledge === level;
               return (
                 <TouchableOpacity
                   key={level}
                   onPress={() => setKnowledge(level)}
-                  disabled={!canEnterDetails}
+                  disabled={!canChooseExperience}
                   style={[
                     styles.knowledgeButton,
                     selected && styles.knowledgeButtonSelected,
-                    !canEnterDetails && styles.buttonDisabled,
+                    !canChooseExperience && styles.buttonDisabled,
                   ]}
                 >
                   <Text
@@ -273,19 +255,49 @@ router.replace("/roadmap");
                   </Text>
                 </TouchableOpacity>
               );
-            }
-          )}
-        </View>
+            })}
+          </View>
 
-        <TouchableOpacity
-          style={[styles.saveButton, !canEnterDetails && styles.buttonDisabled]}
-          onPress={saveProfile}
-          disabled={!canEnterDetails}
-        >
-          <Text style={styles.saveButtonText}>Save profile</Text>
-        </TouchableOpacity>
-      </Animated.View>
+          <TouchableOpacity
+            style={[styles.saveButton, !canChooseExperience && styles.buttonDisabled]}
+            onPress={saveProfile}
+            disabled={!canChooseExperience}
+          >
+            <Text style={styles.saveButtonText}>Save profile</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function CharacterBadge({
+  character,
+  size,
+}: {
+  character: CharacterOption | null;
+  size: "small" | "large";
+}) {
+  if (!character) {
+    return null;
+  }
+
+  const badgeSize = size === "large" ? 96 : 64;
+  const fontSize = size === "large" ? 42 : 28;
+
+  return (
+    <View
+      style={[
+        styles.characterBadge,
+        {
+          backgroundColor: character.accent,
+          height: badgeSize,
+          width: badgeSize,
+        },
+      ]}
+    >
+      <Text style={[styles.characterEmoji, { fontSize }]}>{character.emoji}</Text>
+    </View>
   );
 }
 
@@ -322,7 +334,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: NAVY,
+  },
+  contentContainer: {
     padding: 20,
+    gap: 14,
   },
   title: {
     fontSize: 28,
@@ -336,11 +351,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
   },
-
   dotsRow: {
     flexDirection: "row",
     gap: 8,
-    marginBottom: 16,
+    marginBottom: 2,
   },
   dot: {
     width: 10,
@@ -354,60 +368,42 @@ const styles = StyleSheet.create({
   dotComplete: {
     backgroundColor: "rgba(126,214,165,0.6)",
   },
-
   card: {
     backgroundColor: WHITE,
     borderRadius: 14,
     padding: 16,
     marginBottom: 14,
-    shadowColor: "#000",
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
+    boxShadow: "0px 4px 18px rgba(15, 23, 42, 0.12)",
+    gap: 10,
   },
-
+  lockedCard: {
+    opacity: 0.55,
+  },
   stepLabel: {
     fontSize: 12,
     fontWeight: "900",
     color: GREEN,
-    marginBottom: 6,
     letterSpacing: 0.6,
     textTransform: "uppercase",
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "800",
     color: NAVY,
-    marginBottom: 8,
   },
   helper: {
     fontSize: 13,
     color: "#64748B",
-    marginBottom: 8,
+    lineHeight: 18,
   },
-  bold: {
-    fontWeight: "900",
-    color: NAVY,
-  },
-
-  pickerWrapper: {
-    borderWidth: 1,
-    borderColor: BORDER,
-    borderRadius: 10,
-    overflow: "hidden",
-    backgroundColor: WHITE,
-  },
-  picker: {
-    height: 48,
-    width: "100%",
-  },
-
   label: {
     fontSize: 13,
     fontWeight: "700",
     color: "#334155",
     marginBottom: 6,
+  },
+  spacedLabel: {
+    marginTop: 8,
   },
   input: {
     borderWidth: 1,
@@ -419,12 +415,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: NAVY,
   },
-  inputDisabled: {
-    backgroundColor: "#F1F5F9",
-  },
-
   validation: {
-    marginTop: 8,
     fontSize: 13,
     fontWeight: "700",
   },
@@ -434,20 +425,38 @@ const styles = StyleSheet.create({
   bad: {
     color: SOFT_RED,
   },
-
-  row: {
+  characterGrid: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: 12,
   },
-  half: {
-    flex: 1,
+  characterCard: {
+    width: "47%",
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 12,
+    backgroundColor: PANEL,
+    alignItems: "center",
+    gap: 10,
   },
-
+  characterBadge: {
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  characterEmoji: {
+    textAlign: "center",
+  },
+  characterLabel: {
+    color: NAVY,
+    fontSize: 14,
+    fontWeight: "800",
+  },
   knowledgeRow: {
     flexDirection: "row",
     gap: 8,
     marginTop: 6,
-    marginBottom: 14,
+    marginBottom: 8,
   },
   knowledgeButton: {
     flex: 1,
@@ -466,7 +475,6 @@ const styles = StyleSheet.create({
   knowledgeTextSelected: {
     color: WHITE,
   },
-
   saveButton: {
     backgroundColor: NAVY,
     paddingVertical: 12,
@@ -478,7 +486,57 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     fontSize: 16,
   },
+  secondaryButton: {
+    marginTop: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: BORDER,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+  },
+  secondaryButtonText: {
+    color: NAVY,
+    fontWeight: "800",
+  },
   buttonDisabled: {
     opacity: 0.5,
+  },
+  loadingState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+    gap: 8,
+  },
+  loadingTitle: {
+    color: WHITE,
+    fontSize: 22,
+    fontWeight: "800",
+  },
+  loadingSubtitle: {
+    color: MUTED,
+    fontSize: 14,
+    textAlign: "center",
+  },
+  summaryCard: {
+    backgroundColor: WHITE,
+    borderRadius: 18,
+    padding: 20,
+    alignItems: "center",
+    gap: 10,
+  },
+  summaryName: {
+    color: NAVY,
+    fontSize: 24,
+    fontWeight: "900",
+  },
+  summaryEmail: {
+    color: "#475569",
+    fontSize: 14,
+  },
+  summaryMeta: {
+    color: "#64748B",
+    fontSize: 14,
+    fontWeight: "700",
   },
 });

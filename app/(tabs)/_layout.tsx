@@ -1,13 +1,12 @@
-import React from "react";
-import { View } from "react-native";
-import ProfileScreen from "./profile";
+import { Tabs } from 'expo-router';
+import React from 'react';
 
-export default function App() {
-  // In a real app you'd probably render this screen inside a navigator
-  // and pass real user data via props or context.
+export default function TabLayout() {
   return (
-    <View style={{ flex: 1 }}>
-      <ProfileScreen />
-    </View>
+    <Tabs screenOptions={{ headerShown: false }}>
+      <Tabs.Screen name="index" options={{ title: 'Home' }} />
+      <Tabs.Screen name="explore" options={{ title: 'Explore' }} />
+      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+    </Tabs>
   );
 }
