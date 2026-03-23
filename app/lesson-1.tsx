@@ -909,7 +909,10 @@ export default function LessonOneScreen() {
               if (favoriteBrand) {
                 await AsyncStorage.setItem(LAST_BRAND_KEY, favoriteBrand);
               }
-              router.replace("/simulation-1");
+              router.replace({
+                pathname: "/simulation-1",
+                params: favoriteBrand ? { brand: favoriteBrand } : undefined,
+              });
             }}
             style={styles.primaryBtn}
           >

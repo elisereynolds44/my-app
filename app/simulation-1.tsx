@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { useProfile } from "@/components/profile-context";
 
@@ -358,8 +358,9 @@ function getMood(stats: Stats) {
 
 export default function SimulationOneScreen() {
   const { profile, selectedCharacter } = useProfile();
+  const params = useLocalSearchParams<{ brand?: string }>();
   const [roundIndex, setRoundIndex] = useState(0);
-  const [brand, setBrand] = useState("your brand");
+  const [brand, setBrand] = useState(params.brand ?? "");
   const [stats, setStats] = useState<Stats>({
     cash: 70,
     confidence: 50,
@@ -370,18 +371,24 @@ export default function SimulationOneScreen() {
   const [result, setResult] = useState<Choice | null>(null);
 
   useEffect(() => {
+    if (params.brand) {
+      setBrand(params.brand);
+      return;
+    }
+
     AsyncStorage.getItem(LAST_BRAND_KEY).then((value) => {
       if (value) {
         setBrand(value);
       }
     });
-  }, []);
+  }, [params.brand]);
 
   const round = ROUNDS[Math.min(roundIndex, ROUNDS.length - 1)];
   const progressPct = Math.round((Math.min(roundIndex + 1, ROUNDS.length) / ROUNDS.length) * 100);
   const ending = getEnding(stats);
   const mood = result?.reaction ?? getMood(stats);
   const isFinished = roundIndex >= ROUNDS.length;
+  const resolvedBrand = brand || "your chosen fast food brand";
 
   const handleChoice = () => {
     if (!selectedChoiceId) {
@@ -422,154 +429,150 @@ export default function SimulationOneScreen() {
         <View style={[styles.progressFill, { width: `${progressPct}%` }]} />
       </View>
 
-      <View style={styles.avatarCard}>
-        <View
-          style={[
-            styles.avatarBadge,
-            { backgroundColor: selectedCharacter?.accent ?? "#1E293B" },
-          ]}
-        >
-          <Text style={styles.avatarEmoji}>{selectedCharacter?.emoji ?? "✨"}</Text>
-        </View>
-        <View style={styles.avatarCopy}>
-          <Text style={styles.avatarName}>
-            {(profile?.firstName ?? "You") + "'s"} {selectedCharacter?.label ?? "Investor"}
-          </Text>
-          <Text style={styles.avatarMood}>
-            {selectedCharacter?.label ?? "Your character"} {mood}.
-          </Text>
-          <Text style={styles.avatarBrand}>Tracking: {brand}</Text>
-        </View>
-      </View>
-
-      <View style={styles.statsRow}>
-        {[
-          { label: "Cash", value: stats.cash },
-          { label: "Confidence", value: stats.confidence },
-          { label: "Conviction", value: stats.conviction },
-          { label: "Risk", value: stats.risk },
-        ].map((stat) => (
-          <View key={stat.label} style={styles.statCard}>
-            <Text style={styles.statLabel}>{stat.label}</Text>
-            <Text style={styles.statValue}>{stat.value}</Text>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.heroCard}>
+          <View style={styles.heroBackdrop} />
+          <View
+            style={[
+              styles.avatarBadge,
+              { backgroundColor: selectedCharacter?.accent ?? "#1E293B" },
+            ]}
+          >
+            <Text style={styles.avatarEmoji}>{selectedCharacter?.emoji ?? "✨"}</Text>
           </View>
-        ))}
-      </View>
-
-      <View style={styles.eventCard}>
-        {!isFinished ? (
-          <>
-            <Text style={styles.kicker}>{round.kicker}</Text>
-            <Text style={styles.title}>{round.title}</Text>
-            <Text style={styles.body}>{round.body(brand)}</Text>
-
-            <View style={styles.marketCard}>
-              <View style={styles.marketHeader}>
-                <View>
-                  <Text style={styles.marketLabel}>{round.marketLabel}</Text>
-                  <Text style={styles.marketValue}>{round.marketValue}</Text>
-                </View>
-                <Text style={styles.marketChip}>LIVE STORY</Text>
-              </View>
-              <Text style={styles.marketHeadline}>{round.headline(brand)}</Text>
-            </View>
-
-            {result ? (
-              <View style={styles.resultCard}>
-                <Text style={styles.resultReaction}>{selectedCharacter?.emoji ?? "✨"} {result.reaction}</Text>
-                <Text style={styles.resultExplanation}>{result.explanation}</Text>
-              </View>
-            ) : (
-              <View style={styles.choices}>
-                {round.choices.map((choice) => {
-                  const selected = selectedChoiceId === choice.id;
-                  return (
-                    <TouchableOpacity
-                      key={choice.id}
-                      onPress={() => setSelectedChoiceId(choice.id)}
-                      style={[styles.choiceCard, selected && styles.choiceCardSelected]}
-                    >
-                      <Text style={[styles.choiceText, selected && styles.choiceTextSelected]}>
-                        {choice.label}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            )}
-          </>
-        ) : (
-          <>
-            <Text style={styles.kicker}>SIMULATION COMPLETE</Text>
-            <Text style={styles.title}>{ending.title}</Text>
-            <Text style={styles.body}>{ending.body}</Text>
-
-            <View style={styles.marketCard}>
-              <View style={styles.marketHeader}>
-                <View>
-                  <Text style={styles.marketLabel}>Final read</Text>
-                  <Text style={styles.marketValue}>{brand}</Text>
-                </View>
-                <Text style={styles.marketChip}>WRAP-UP</Text>
-              </View>
-              <Text style={styles.marketHeadline}>
-                You finished the first simulation by learning how demand, profit, expectations, and emotion all collide.
-              </Text>
-            </View>
-
-            <View style={styles.resultCard}>
-              <Text style={styles.resultReaction}>
-                {selectedCharacter?.emoji ?? "✨"} {selectedCharacter?.label ?? "Your character"} {getMood(stats)}.
-              </Text>
-              <Text style={styles.resultExplanation}>
-                Best next move: keep using a simple checklist before reacting to price swings.
-              </Text>
-            </View>
-
-            <View style={styles.statsRow}>
-              {[
-                { label: "Cash", value: stats.cash },
-                { label: "Confidence", value: stats.confidence },
-                { label: "Conviction", value: stats.conviction },
-                { label: "Risk", value: stats.risk },
-              ].map((stat) => (
-                <View key={stat.label} style={styles.statCard}>
-                  <Text style={styles.statLabel}>{stat.label}</Text>
-                  <Text style={styles.statValue}>{stat.value}</Text>
-                </View>
-              ))}
-            </View>
-          </>
-        )}
-      </View>
-
-      <View style={styles.footer}>
-        {!isFinished && !result ? (
-          <TouchableOpacity
-            onPress={handleChoice}
-            disabled={!selectedChoiceId}
-            style={[styles.primaryButton, !selectedChoiceId && styles.buttonDisabled]}
-          >
-            <Text style={styles.primaryButtonText}>Lock choice</Text>
-          </TouchableOpacity>
-        ) : !isFinished ? (
-          <TouchableOpacity onPress={handleContinue} style={styles.primaryButton}>
-            <Text style={styles.primaryButtonText}>
-              {roundIndex === ROUNDS.length - 1 ? `Finish as ${ending.title}` : "Next round"}
+          <View style={styles.avatarCopy}>
+            <Text style={styles.avatarName}>
+              {(profile?.firstName ?? "You") + "'s"} {selectedCharacter?.label ?? "Investor"}
             </Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            onPress={async () => {
-              await AsyncStorage.setItem(COMPLETED_SIMULATION_KEY, "true");
-              router.replace("/roadmap");
-            }}
-            style={styles.primaryButton}
-          >
-            <Text style={styles.primaryButtonText}>Complete Module 1</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+            <Text style={styles.avatarMood}>
+              {selectedCharacter?.label ?? "Your character"} {mood}.
+            </Text>
+            <Text style={styles.avatarBrand}>Tracking: {resolvedBrand}</Text>
+          </View>
+        </View>
+
+        <View style={styles.tickerRow}>
+          {[
+            `${round.kicker}`,
+            `${resolvedBrand}`,
+            `Cash ${stats.cash}`,
+            `Confidence ${stats.confidence}`,
+            `Conviction ${stats.conviction}`,
+            `Risk ${stats.risk}`,
+          ].map((item) => (
+            <View key={item} style={styles.tickerPill}>
+              <Text style={styles.tickerPillText}>{item}</Text>
+            </View>
+          ))}
+        </View>
+        <View style={styles.storyStage}>
+          {!isFinished ? (
+            <>
+              <Text style={styles.kicker}>{round.kicker}</Text>
+              <Text style={styles.title}>{round.title}</Text>
+              <Text style={styles.body}>{round.body(resolvedBrand)}</Text>
+
+              <View style={styles.marketCard}>
+                <View style={styles.marketHeader}>
+                  <View>
+                    <Text style={styles.marketLabel}>{round.marketLabel}</Text>
+                    <Text style={styles.marketValue}>{round.marketValue}</Text>
+                  </View>
+                  <Text style={styles.marketChip}>LIVE STORY</Text>
+                </View>
+                <Text style={styles.marketHeadline}>{round.headline(resolvedBrand)}</Text>
+              </View>
+
+              <View style={styles.decisionPanel}>
+                <Text style={styles.panelTitle}>What do you do?</Text>
+                {result ? (
+                  <View style={styles.resultCard}>
+                    <Text style={styles.resultReaction}>{selectedCharacter?.emoji ?? "✨"} {result.reaction}</Text>
+                    <Text style={styles.resultExplanation}>{result.explanation}</Text>
+                  </View>
+                ) : (
+                  <View style={styles.choices}>
+                    {round.choices.map((choice, index) => {
+                      const selected = selectedChoiceId === choice.id;
+                      const choiceLabel = String.fromCharCode(65 + index);
+                      return (
+                        <TouchableOpacity
+                          key={choice.id}
+                          onPress={() => setSelectedChoiceId(choice.id)}
+                          style={[styles.choiceCard, selected && styles.choiceCardSelected]}
+                        >
+                          <View style={styles.choiceTag}>
+                            <Text style={styles.choiceTagText}>{choiceLabel}</Text>
+                          </View>
+                          <Text style={[styles.choiceText, selected && styles.choiceTextSelected]}>
+                            {choice.label}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                )}
+              </View>
+            </>
+          ) : (
+            <>
+              <Text style={styles.kicker}>SIMULATION COMPLETE</Text>
+              <Text style={styles.title}>{ending.title}</Text>
+              <Text style={styles.body}>{ending.body}</Text>
+
+              <View style={styles.marketCard}>
+                <View style={styles.marketHeader}>
+                  <View>
+                    <Text style={styles.marketLabel}>Final read</Text>
+                    <Text style={styles.marketValue}>{resolvedBrand}</Text>
+                  </View>
+                  <Text style={styles.marketChip}>WRAP-UP</Text>
+                </View>
+                <Text style={styles.marketHeadline}>
+                  You finished the first simulation by learning how demand, profit, expectations, and emotion all collide.
+                </Text>
+              </View>
+
+              <View style={styles.resultCard}>
+                <Text style={styles.resultReaction}>
+                  {selectedCharacter?.emoji ?? "✨"} {selectedCharacter?.label ?? "Your character"} {getMood(stats)}.
+                </Text>
+                <Text style={styles.resultExplanation}>
+                  Best next move: keep using a simple checklist before reacting to price swings.
+                </Text>
+              </View>
+            </>
+          )}
+        </View>
+
+        <View style={styles.footer}>
+          {!isFinished && !result ? (
+            <TouchableOpacity
+              onPress={handleChoice}
+              disabled={!selectedChoiceId}
+              style={[styles.primaryButton, !selectedChoiceId && styles.buttonDisabled]}
+            >
+              <Text style={styles.primaryButtonText}>Lock choice</Text>
+            </TouchableOpacity>
+          ) : !isFinished ? (
+            <TouchableOpacity onPress={handleContinue} style={styles.primaryButton}>
+              <Text style={styles.primaryButtonText}>
+                {roundIndex === ROUNDS.length - 1 ? `Finish as ${ending.title}` : "Next round"}
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              onPress={async () => {
+                await AsyncStorage.setItem(COMPLETED_SIMULATION_KEY, "true");
+                router.replace("/roadmap");
+              }}
+              style={styles.primaryButton}
+            >
+              <Text style={styles.primaryButtonText}>Complete Module 1</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -614,26 +617,40 @@ const styles = StyleSheet.create({
     height: "100%",
     backgroundColor: GREEN,
   },
-  avatarCard: {
+  scrollContent: {
+    paddingBottom: 24,
+  },
+  heroCard: {
     flexDirection: "row",
-    gap: 14,
-    backgroundColor: CARD,
-    borderWidth: 1,
-    borderColor: BORDER,
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 14,
+    gap: 16,
+    backgroundColor: "#13233D",
+    borderRadius: 28,
+    padding: 18,
+    marginBottom: 12,
     alignItems: "center",
+    overflow: "hidden",
+    position: "relative",
+  },
+  heroBackdrop: {
+    position: "absolute",
+    right: -30,
+    top: -20,
+    width: 140,
+    height: 140,
+    borderRadius: 999,
+    backgroundColor: "rgba(126,214,165,0.12)",
   },
   avatarBadge: {
-    width: 78,
-    height: 78,
+    width: 92,
+    height: 92,
     borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 4,
+    borderColor: "rgba(255,255,255,0.18)",
   },
   avatarEmoji: {
-    fontSize: 34,
+    fontSize: 40,
   },
   avatarCopy: {
     flex: 1,
@@ -654,39 +671,32 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "800",
   },
-  statsRow: {
+  tickerRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10,
+    gap: 8,
     marginBottom: 14,
   },
-  statCard: {
-    width: "47%",
-    backgroundColor: "rgba(255,255,255,0.04)",
+  tickerPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.06)",
     borderWidth: 1,
     borderColor: BORDER,
-    borderRadius: 16,
-    padding: 12,
   },
-  statLabel: {
-    color: MUTED,
+  tickerPillText: {
+    color: WHITE,
     fontSize: 12,
     fontWeight: "800",
-    textTransform: "uppercase",
   },
-  statValue: {
-    color: WHITE,
-    fontSize: 24,
-    fontWeight: "900",
-    marginTop: 8,
-  },
-  eventCard: {
-    flex: 1,
+  storyStage: {
     backgroundColor: CARD,
     borderWidth: 1,
     borderColor: BORDER,
-    borderRadius: 20,
+    borderRadius: 28,
     padding: 18,
+    overflow: "hidden",
   },
   kicker: {
     color: GREEN,
@@ -706,6 +716,20 @@ const styles = StyleSheet.create({
     color: MUTED,
     fontSize: 15,
     lineHeight: 22,
+  },
+  decisionPanel: {
+    marginTop: 18,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderWidth: 1,
+    borderColor: BORDER,
+    padding: 14,
+  },
+  panelTitle: {
+    color: WHITE,
+    fontSize: 15,
+    fontWeight: "900",
+    marginBottom: 10,
   },
   marketCard: {
     marginTop: 16,
@@ -751,21 +775,37 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   choices: {
-    marginTop: 16,
     gap: 10,
   },
   choiceCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: BORDER,
-    backgroundColor: "rgba(255,255,255,0.03)",
+    backgroundColor: "rgba(15,23,42,0.55)",
     padding: 14,
   },
   choiceCardSelected: {
     borderColor: "rgba(126,214,165,0.65)",
-    backgroundColor: "rgba(126,214,165,0.12)",
+    backgroundColor: "rgba(126,214,165,0.14)",
+  },
+  choiceTag: {
+    width: 30,
+    height: 30,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.10)",
+  },
+  choiceTagText: {
+    color: GREEN,
+    fontWeight: "900",
+    fontSize: 12,
   },
   choiceText: {
+    flex: 1,
     color: WHITE,
     fontSize: 14,
     fontWeight: "800",
@@ -775,11 +815,10 @@ const styles = StyleSheet.create({
     color: WHITE,
   },
   resultCard: {
-    marginTop: 16,
     borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.05)",
+    backgroundColor: "rgba(126,214,165,0.08)",
     borderWidth: 1,
-    borderColor: BORDER,
+    borderColor: "rgba(126,214,165,0.2)",
     padding: 14,
     gap: 8,
   },

@@ -80,18 +80,21 @@ const MODULES = [
 export default function RoadmapScreen() {
   const [completedLesson1, setCompletedLesson1] = useState(false);
   const [completedSimulation1, setCompletedSimulation1] = useState(false);
+  const [lastBrand, setLastBrand] = useState<string | null>(null);
 
   // Refresh when returning to this screen
   useFocusEffect(
     useCallback(() => {
       const load = async () => {
         try {
-          const [lessonDone, simulationDone] = await Promise.all([
+          const [lessonDone, simulationDone, storedBrand] = await Promise.all([
             AsyncStorage.getItem("completedLesson1"),
             AsyncStorage.getItem("completedSimulation1"),
+            AsyncStorage.getItem("lesson1LastBrand"),
           ]);
           setCompletedLesson1(lessonDone === "true");
           setCompletedSimulation1(simulationDone === "true");
+          setLastBrand(storedBrand);
         } catch (e) {
           console.log("Error loading completedLesson1", e);
         }
@@ -163,7 +166,16 @@ export default function RoadmapScreen() {
                 <TouchableOpacity
                   accessibilityRole="button"
                   style={styles.button}
-                  onPress={() => router.push(actionRoute as any)}
+                  onPress={() =>
+                    router.push(
+                      isModuleOne && isLessonDone && !completedSimulation1
+                        ? ({
+                            pathname: "/simulation-1",
+                            params: lastBrand ? { brand: lastBrand } : undefined,
+                          } as any)
+                        : (actionRoute as any)
+                    )
+                  }
                 >
                   <Text style={styles.buttonText}>{actionLabel}</Text>
                 </TouchableOpacity>
