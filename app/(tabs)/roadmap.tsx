@@ -122,14 +122,11 @@ export default function RoadmapScreen() {
           const isModuleOne = module.id === "lesson-1";
           const isCompleted = isModuleOne && completedSimulation1;
           const isLessonDone = isModuleOne && completedLesson1;
-          const actionRoute = isModuleOne && isLessonDone && !completedSimulation1
-            ? "/simulation-1"
-            : module.route;
           const actionLabel = isModuleOne
             ? isCompleted
-              ? "Replay module"
+              ? "Review lesson"
               : isLessonDone
-                ? "Start simulation"
+                ? "Review lesson"
                 : "Start lesson 1"
             : isCompleted
               ? "Review module"
@@ -162,28 +159,48 @@ export default function RoadmapScreen() {
 
               {isModuleOne && isLessonDone && !completedSimulation1 ? (
                 <Text style={styles.helperText}>
-                  Lesson complete. Finish the simulation to complete Module 1.
+                  Lesson complete. You can review it anytime, and the simulation is ready too.
                 </Text>
               ) : isModuleOne && !isLessonDone ? (
                 <Text style={styles.helperText}>
                   Complete Lesson 1 first, then the simulation opens immediately after.
                 </Text>
+              ) : isModuleOne && isCompleted ? (
+                <Text style={styles.helperText}>
+                  Module 1 is complete. You can revisit the lesson or replay the simulation.
+                </Text>
               ) : null}
 
-              {(isReady || (isModuleOne && isLessonDone && !completedSimulation1)) ? (
+              {isModuleOne && isLessonDone ? (
+                <View style={styles.buttonRow}>
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    style={[styles.button, styles.secondaryButton]}
+                    onPress={() => router.push("/lesson-1")}
+                  >
+                    <Text style={[styles.buttonText, styles.secondaryButtonText]}>{actionLabel}</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    style={styles.button}
+                    onPress={() =>
+                      router.push({
+                        pathname: "/simulation-1",
+                        params: lastBrand ? { brand: lastBrand } : undefined,
+                      } as any)
+                    }
+                  >
+                    <Text style={styles.buttonText}>
+                      {isCompleted ? "Replay simulation" : "Play simulation"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ) : isReady ? (
                 <TouchableOpacity
                   accessibilityRole="button"
                   style={styles.button}
-                  onPress={() =>
-                    router.push(
-                      isModuleOne && isLessonDone && !completedSimulation1
-                        ? ({
-                            pathname: "/simulation-1",
-                            params: lastBrand ? { brand: lastBrand } : undefined,
-                          } as any)
-                        : (actionRoute as any)
-                    )
-                  }
+                  onPress={() => router.push(module.route as any)}
                 >
                   <Text style={styles.buttonText}>{actionLabel}</Text>
                 </TouchableOpacity>
@@ -274,6 +291,17 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 10,
     alignItems: "center",
+    flex: 1,
+  },
+  buttonRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  secondaryButton: {
+    backgroundColor: "#E2E8F0",
+  },
+  secondaryButtonText: {
+    color: NAVY,
   },
   buttonText: {
     color: WHITE,

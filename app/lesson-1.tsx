@@ -1003,7 +1003,7 @@ export default function LessonOneScreen() {
           <TouchableOpacity
             onPress={async () => {
               await AsyncStorage.setItem("completedLesson1", "true");
-              await AsyncStorage.removeItem(INDEX_KEY);
+              await AsyncStorage.setItem(INDEX_KEY, String(total - 1));
               await AsyncStorage.removeItem(BRAND_KEY);
               if (favoriteBrand) {
                 await AsyncStorage.setItem(LAST_BRAND_KEY, favoriteBrand);
