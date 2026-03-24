@@ -37,7 +37,6 @@ type SimulationStep = {
   title: string;
   marketLabel: string;
   marketValue: string;
-  trend: { label: string; value: number }[];
   body: (brand: string, job: string) => string;
   update: (brand: string) => string;
   choices: Choice[];
@@ -50,12 +49,6 @@ const STEPS: SimulationStep[] = [
     title: "You finally make your first move.",
     marketLabel: "Starting price",
     marketValue: "Quiet week",
-    trend: [
-      { label: "9:30", value: 46 },
-      { label: "11:00", value: 49 },
-      { label: "1:00", value: 47 },
-      { label: "4:00", value: 50 },
-    ],
     body: (brand, job) =>
       `You are working as a ${job}, getting paid every two weeks, and trying to be smarter with your money. You keep coming back to ${brand} because you know the business, you eat there, and you have followed it for years.`,
     update: (brand) => `${brand} is flat this week. No huge news, just a normal market open.`,
@@ -89,12 +82,6 @@ const STEPS: SimulationStep[] = [
     title: "Your paycheck hits and the stock inches up.",
     marketLabel: "1-month move",
     marketValue: "+4.2%",
-    trend: [
-      { label: "W1", value: 42 },
-      { label: "W2", value: 48 },
-      { label: "W3", value: 54 },
-      { label: "W4", value: 59 },
-    ],
     body: (brand, job) =>
       `A month passes. You get another paycheck from your ${job}, and ${brand} moves up a little. Nothing dramatic, but enough to make you wonder if you should do more.`,
     update: (brand) => `${brand} rises slowly as sales look solid and investors stay optimistic.`,
@@ -128,12 +115,6 @@ const STEPS: SimulationStep[] = [
     title: "Revenue comes in strong.",
     marketLabel: "Quarterly revenue",
     marketValue: "Beat",
-    trend: [
-      { label: "Pre", value: 44 },
-      { label: "Open", value: 52 },
-      { label: "Noon", value: 63 },
-      { label: "Close", value: 68 },
-    ],
     body: (brand) =>
       `${brand} reports strong sales. The brand still looks popular, stores are busy, and the story sounds good on the surface.`,
     update: (brand) => `${brand} beats revenue expectations, and social media gets excited about the report.`,
@@ -167,12 +148,6 @@ const STEPS: SimulationStep[] = [
     title: "Profit disappoints even though sales look good.",
     marketLabel: "Profit trend",
     marketValue: "Under pressure",
-    trend: [
-      { label: "Mon", value: 70 },
-      { label: "Tue", value: 61 },
-      { label: "Wed", value: 55 },
-      { label: "Thu", value: 50 },
-    ],
     body: (brand) =>
       `${brand} sold plenty, but costs jumped. Profit looks weaker than people expected, and the stock starts wobbling.`,
     update: (brand) => `${brand} keeps demand, but rising costs squeeze the quarter.`,
@@ -206,12 +181,6 @@ const STEPS: SimulationStep[] = [
     title: "The stock becomes a trend online.",
     marketLabel: "Hype meter",
     marketValue: "Loud",
-    trend: [
-      { label: "Day 1", value: 46 },
-      { label: "Day 2", value: 58 },
-      { label: "Day 3", value: 78 },
-      { label: "Day 4", value: 86 },
-    ],
     body: (brand) =>
       `Out of nowhere, ${brand} becomes a social-media stock. Everyone has a take, and every little move suddenly feels huge.`,
     update: (brand) => `${brand} trends hard online and jumps because attention itself becomes fuel.`,
@@ -245,12 +214,6 @@ const STEPS: SimulationStep[] = [
     title: "Bad news hits the whole fast food industry.",
     marketLabel: "Sector news",
     marketValue: "Shock",
-    trend: [
-      { label: "Open", value: 74 },
-      { label: "10am", value: 60 },
-      { label: "1pm", value: 44 },
-      { label: "Close", value: 38 },
-    ],
     body: (brand) =>
       `Six months in, a scary headline drops: regulations and supply shocks might hit fast food chains broadly. Investors dump the entire category, including ${brand}.`,
     update: (brand) => `Breaking: analysts warn that fast food traffic and margins could weaken across the sector, and ${brand} sells off with everyone else.`,
@@ -284,12 +247,6 @@ const STEPS: SimulationStep[] = [
     title: "You realize price and business are separate questions.",
     marketLabel: "Valuation",
     marketValue: "Stretched",
-    trend: [
-      { label: "Low", value: 41 },
-      { label: "Base", value: 48 },
-      { label: "Run", value: 72 },
-      { label: "Now", value: 76 },
-    ],
     body: (brand) =>
       `The business still looks decent, but the stock price is acting like ${brand} has to be perfect. You realize that loving the company and buying the stock are not automatically the same choice.`,
     update: (brand) => `${brand} still looks like a good business, but plenty of investors worry the stock is priced for perfection.`,
@@ -323,12 +280,6 @@ const STEPS: SimulationStep[] = [
     title: "You start using a checklist instead of vibes.",
     marketLabel: "Your process",
     marketValue: "Getting stronger",
-    trend: [
-      { label: "Q1", value: 50 },
-      { label: "Q2", value: 56 },
-      { label: "Q3", value: 60 },
-      { label: "Q4", value: 66 },
-    ],
     body: (brand) =>
       `Ten months in, you stop asking “is ${brand} exciting?” and start asking the same three questions every time: is demand healthy, are profits improving, and does the price still make sense?`,
     update: (_brand) => "Your process is starting to matter more than your mood.",
@@ -362,12 +313,6 @@ const STEPS: SimulationStep[] = [
     title: "A year later, what kind of investor are you?",
     marketLabel: "Time horizon",
     marketValue: "One year in",
-    trend: [
-      { label: "Jan", value: 40 },
-      { label: "Apr", value: 58 },
-      { label: "Aug", value: 46 },
-      { label: "Now", value: 64 },
-    ],
     body: (brand) =>
       `A full year passes. ${brand} has gone through boring weeks, exciting months, bad headlines, and hype cycles. The biggest change is not the stock. It is how you respond to it.`,
     update: (_brand) => "The market never stopped being noisy. You just got better at reading yourself inside it.",
@@ -612,69 +557,6 @@ export default function SimulationOneScreen() {
         </View>
 
         {!isFinished ? (
-          <View style={styles.chartCard}>
-            <View style={styles.chartHeader}>
-              <Text style={styles.chartTitle}>{resolvedBrand} trend</Text>
-              <Text style={styles.chartSubtitle}>{step.marketValue}</Text>
-            </View>
-
-            <View style={styles.lineChart}>
-              <View style={styles.lineRule} />
-              <View style={styles.lineRule} />
-              <View style={styles.lineRule} />
-              <View style={styles.lineCanvas}>
-                {step.trend.map((point, index) => {
-                  const leftPct =
-                    step.trend.length === 1 ? 0 : (index / (step.trend.length - 1)) * 100;
-                  const bottomPct = Math.min(88, Math.max(14, point.value));
-                  const next = step.trend[index + 1];
-                  const nextBottomPct = next
-                    ? Math.min(88, Math.max(14, next.value))
-                    : null;
-                  const widthPct =
-                    next && step.trend.length > 1 ? 100 / (step.trend.length - 1) : 0;
-
-                  return (
-                    <React.Fragment key={point.label}>
-                      {nextBottomPct !== null ? (
-                        <View
-                          style={[
-                            styles.lineSegment,
-                            {
-                              left: `${leftPct}%`,
-                              bottom: `${bottomPct}%`,
-                              width: `${widthPct}%`,
-                              transform: [{ rotate: `${(nextBottomPct - bottomPct) * 0.55}deg` }],
-                            },
-                          ]}
-                        />
-                      ) : null}
-                      <View
-                        style={[
-                          styles.linePoint,
-                          {
-                            left: `${leftPct}%`,
-                            bottom: `${bottomPct}%`,
-                          },
-                        ]}
-                      />
-                    </React.Fragment>
-                  );
-                })}
-              </View>
-            </View>
-
-            <View style={styles.chartLabels}>
-              {step.trend.map((point) => (
-                <Text key={point.label} style={styles.chartLabel}>
-                  {point.label}
-                </Text>
-              ))}
-            </View>
-          </View>
-        ) : null}
-
-        {!isFinished ? (
           <>
             <View style={styles.timeHeader}>
               <Text style={styles.timeLabel}>{step.timeLabel}</Text>
@@ -898,73 +780,6 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 10,
     marginBottom: 18,
-  },
-  chartCard: {
-    borderRadius: 22,
-    backgroundColor: "#0D1729",
-    borderWidth: 1,
-    borderColor: BORDER,
-    padding: 14,
-    marginBottom: 18,
-  },
-  chartHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  chartTitle: {
-    color: WHITE,
-    fontSize: 15,
-    fontWeight: "900",
-  },
-  chartSubtitle: {
-    color: GREEN,
-    fontSize: 12,
-    fontWeight: "800",
-  },
-  lineChart: {
-    height: 120,
-    justifyContent: "space-between",
-    position: "relative",
-  },
-  lineRule: {
-    height: 1,
-    backgroundColor: "rgba(255,255,255,0.08)",
-  },
-  lineCanvas: {
-    position: "absolute",
-    left: 8,
-    right: 8,
-    top: 8,
-    bottom: 18,
-  },
-  lineSegment: {
-    position: "absolute",
-    height: 3,
-    backgroundColor: GREEN,
-    borderRadius: 999,
-  },
-  linePoint: {
-    position: "absolute",
-    width: 12,
-    height: 12,
-    borderRadius: 999,
-    backgroundColor: WHITE,
-    borderWidth: 3,
-    borderColor: GREEN,
-    marginLeft: -6,
-    marginBottom: -6,
-  },
-  chartLabels: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 6,
-  },
-  chartLabel: {
-    color: MUTED,
-    fontSize: 11,
-    fontWeight: "800",
   },
   statChip: {
     width: "47%",
