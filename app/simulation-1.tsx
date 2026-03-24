@@ -220,11 +220,11 @@ const STEPS: SimulationStep[] = [
     update: (brand) => `Breaking: analysts warn that fast food traffic and margins could weaken across the sector, and ${brand} sells off with everyone else.`,
     choices: [
       {
-        id: "read-sector-news",
-        label: "Read the news carefully before reacting",
-        reaction: "is keeping a level head",
-        explanation: "Sometimes a scary headline matters. Sometimes it is just broad fear hitting everything at once.",
-        effects: { confidence: 7, stress: -6 },
+        id: "check-indexes-first",
+        label: "Check the major indexes first to see if this is a company problem or a broad sell-off",
+        reaction: "is checking the full market",
+        explanation: "That is a strong move. If the indexes are red too, you learn this might be bigger market fear, not just your stock imploding on its own.",
+        effects: { confidence: 8, stress: -7 },
       },
       {
         id: "sell-on-fear",
@@ -601,15 +601,16 @@ function getQuoteSnapshot(step: SimulationStep, brand: string) {
 
 function getWatchlist(step: SimulationStep, brand: string) {
   const mainSymbol = getBrandSymbol(brand);
+  const broadSelloff = step.id === "month-6";
 
   return [
     { symbol: mainSymbol, label: brand, move: getStepMove(step), active: true },
-    { symbol: "SPX", label: "S&P 500", move: "+0.5%", active: false },
-    { symbol: "IXIC", label: "Nasdaq", move: "+0.8%", active: false },
-    { symbol: "DJI", label: "Dow Jones", move: "-0.1%", active: false },
-    { symbol: "MCD", label: "McDonald's", move: "-0.8%", active: false },
-    { symbol: "SBUX", label: "Starbucks", move: "+1.3%", active: false },
-    { symbol: "YUM", label: "Yum! Brands", move: "-1.1%", active: false },
+    { symbol: "SPX", label: "S&P 500", move: broadSelloff ? "-1.9%" : "+0.5%", active: false },
+    { symbol: "IXIC", label: "Nasdaq", move: broadSelloff ? "-2.4%" : "+0.8%", active: false },
+    { symbol: "DJI", label: "Dow Jones", move: broadSelloff ? "-1.3%" : "-0.1%", active: false },
+    { symbol: "MCD", label: "McDonald's", move: broadSelloff ? "-2.7%" : "-0.8%", active: false },
+    { symbol: "SBUX", label: "Starbucks", move: broadSelloff ? "-3.2%" : "+1.3%", active: false },
+    { symbol: "YUM", label: "Yum! Brands", move: broadSelloff ? "-2.9%" : "-1.1%", active: false },
   ];
 }
 
