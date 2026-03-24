@@ -17,8 +17,9 @@ const COMPLETED_SIMULATION_KEY = "completedSimulation1";
 
 type Stats = {
   annualIncome: number;
-  investedDollars: number;
-  savingsDollars: number;
+  amountInvestedDollars: number;
+  portfolioValueDollars: number;
+  cashDollars: number;
   confidence: number;
   stress: number;
 };
@@ -58,14 +59,14 @@ const STEPS: SimulationStep[] = [
         label: "Invest a small amount so you can start learning without panicking",
         reaction: "is feeling steady",
         explanation: "Small position sizes are often easier to stick with when you are still learning.",
-        effects: { savingsDollars: -1200, investedDollars: 1200, confidence: 7, stress: -2 },
+        effects: { cashDollars: -1200, amountInvestedDollars: 1200, portfolioValueDollars: 1200, confidence: 7, stress: -2 },
       },
       {
         id: "all-in",
         label: "Go bigger because you already love the brand",
         reaction: "is running on vibes",
         explanation: "Loving a brand is a start, but it is not the same as sizing risk well.",
-        effects: { savingsDollars: -2500, investedDollars: 2500, confidence: 4, stress: 12 },
+        effects: { cashDollars: -2500, amountInvestedDollars: 2500, portfolioValueDollars: 2500, confidence: 4, stress: 12 },
       },
       {
         id: "wait",
@@ -91,7 +92,7 @@ const STEPS: SimulationStep[] = [
         label: "Add a little more from this paycheck",
         reaction: "is building confidence",
         explanation: "Regular smaller additions can feel more manageable than one giant bet.",
-        effects: { annualIncome: 1500, savingsDollars: -1000, investedDollars: 1000, confidence: 6, stress: 2 },
+        effects: { annualIncome: 1500, cashDollars: -1000, amountInvestedDollars: 1000, portfolioValueDollars: 1000, confidence: 6, stress: 2 },
       },
       {
         id: "hold",
@@ -105,7 +106,7 @@ const STEPS: SimulationStep[] = [
         label: "Rush in because you are afraid the stock is getting away from you",
         reaction: "is chasing a little",
         explanation: "FOMO can make even small price moves feel bigger than they are.",
-        effects: { annualIncome: 1500, savingsDollars: -1800, investedDollars: 1800, confidence: 3, stress: 10 },
+        effects: { annualIncome: 1500, cashDollars: -1800, amountInvestedDollars: 1800, portfolioValueDollars: 1800, confidence: 3, stress: 10 },
       },
     ],
   },
@@ -164,14 +165,14 @@ const STEPS: SimulationStep[] = [
         label: "Sell because a weak profit quarter must mean the whole thesis is dead",
         reaction: "is spiraling",
         explanation: "One disappointing metric is not always the same as a broken business.",
-        effects: { savingsDollars: 1000, investedDollars: -1000, confidence: -8, stress: 6 },
+        effects: { cashDollars: 1000, amountInvestedDollars: -1000, portfolioValueDollars: -1000, confidence: -8, stress: 6 },
       },
       {
         id: "average-down-fast",
         label: "Buy more instantly without checking why profit dropped",
         reaction: "is moving too fast",
         explanation: "Speed is not the same thing as conviction.",
-        effects: { savingsDollars: -1200, investedDollars: 1200, confidence: 2, stress: 10 },
+        effects: { cashDollars: -1200, amountInvestedDollars: 1200, portfolioValueDollars: 1200, confidence: 2, stress: 10 },
       },
     ],
   },
@@ -197,14 +198,14 @@ const STEPS: SimulationStep[] = [
         label: "Join the hype because it looks like easy money",
         reaction: "is chasing hype",
         explanation: "When everyone is excited, expectations can get inflated fast.",
-        effects: { savingsDollars: -1000, investedDollars: 1000, confidence: 4, stress: 14 },
+        effects: { cashDollars: -1000, amountInvestedDollars: 1000, portfolioValueDollars: 1000, confidence: 4, stress: 14 },
       },
       {
         id: "sell-noise",
         label: "Sell just because the whole thing feels chaotic",
         reaction: "is reacting emotionally",
         explanation: "Chaos can be uncomfortable, but discomfort is not a full thesis either.",
-        effects: { savingsDollars: 1400, investedDollars: -1400, confidence: -2, stress: 4 },
+        effects: { cashDollars: 1400, amountInvestedDollars: -1400, portfolioValueDollars: -1400, confidence: -2, stress: 4 },
       },
     ],
   },
@@ -230,14 +231,14 @@ const STEPS: SimulationStep[] = [
         label: "Dump the stock because the whole industry sounds doomed",
         reaction: "is panic-selling",
         explanation: "Sector fear can be real, but panic is rarely the cleanest decision tool.",
-        effects: { savingsDollars: 1600, investedDollars: -1600, confidence: -7, stress: 8 },
+        effects: { cashDollars: 1600, amountInvestedDollars: -1600, portfolioValueDollars: -1600, confidence: -7, stress: 8 },
       },
       {
         id: "buy-with-thesis",
         label: "Add a little only if you still believe the business can handle the pressure",
         reaction: "is acting with conviction",
         explanation: "Buying during fear only makes sense when the reasoning is still intact.",
-        effects: { savingsDollars: -1000, investedDollars: 1000, confidence: 5, stress: 5 },
+        effects: { cashDollars: -1000, amountInvestedDollars: 1000, portfolioValueDollars: 1000, confidence: 5, stress: 5 },
       },
     ],
   },
@@ -353,8 +354,13 @@ function clampMoney(value: number) {
 function applyEffects(stats: Stats, effects: Partial<Stats>): Stats {
   return {
     annualIncome: clampMoney(stats.annualIncome + (effects.annualIncome ?? 0)),
-    investedDollars: clampMoney(stats.investedDollars + (effects.investedDollars ?? 0)),
-    savingsDollars: clampMoney(stats.savingsDollars + (effects.savingsDollars ?? 0)),
+    amountInvestedDollars: clampMoney(
+      stats.amountInvestedDollars + (effects.amountInvestedDollars ?? 0)
+    ),
+    portfolioValueDollars: clampMoney(
+      stats.portfolioValueDollars + (effects.portfolioValueDollars ?? 0)
+    ),
+    cashDollars: clampMoney(stats.cashDollars + (effects.cashDollars ?? 0)),
     confidence: clampStat(stats.confidence + (effects.confidence ?? 0)),
     stress: clampStat(stats.stress + (effects.stress ?? 0)),
   };
@@ -375,7 +381,7 @@ function getEnding(stats: Stats) {
     };
   }
 
-  if (stats.savingsDollars >= 7500 && stats.investedDollars <= 2500) {
+  if (stats.cashDollars >= 7500 && stats.amountInvestedDollars <= 2500) {
     return {
       title: "Careful Observer",
       body: "You protected yourself well, but you still have room to build conviction and act with more clarity.",
@@ -406,12 +412,16 @@ function formatMoney(value: number) {
 function getEffectBadges(effects: Partial<Stats>) {
   const badges: string[] = [];
 
-  if (effects.investedDollars) {
-    badges.push(`${effects.investedDollars > 0 ? "+" : "-"}Invested`);
+  if (effects.amountInvestedDollars) {
+    badges.push(`${effects.amountInvestedDollars > 0 ? "+" : "-"}Invested`);
   }
 
-  if (effects.savingsDollars) {
-    badges.push(`${effects.savingsDollars > 0 ? "+" : "-"}Savings`);
+  if (effects.portfolioValueDollars) {
+    badges.push(`${effects.portfolioValueDollars > 0 ? "+" : "-"}Value`);
+  }
+
+  if (effects.cashDollars) {
+    badges.push(`${effects.cashDollars > 0 ? "+" : "-"}Cash`);
   }
 
   if (effects.confidence) {
@@ -609,8 +619,9 @@ export default function SimulationOneScreen() {
   const [brand, setBrand] = useState(params.brand ?? "");
   const [stats, setStats] = useState<Stats>({
     annualIncome: 105000,
-    investedDollars: 4000,
-    savingsDollars: 14000,
+    amountInvestedDollars: 4000,
+    portfolioValueDollars: 4000,
+    cashDollars: 14000,
     confidence: 44,
     stress: 34,
   });
@@ -733,9 +744,9 @@ export default function SimulationOneScreen() {
         <View style={styles.statsRow}>
           {[
             { label: "Income", value: formatMoney(stats.annualIncome), helper: "annual pay" },
-            { label: "Invested", value: formatMoney(stats.investedDollars), helper: "currently in the market" },
-            { label: "Savings", value: formatMoney(stats.savingsDollars), helper: "still in cash" },
-            { label: "Stress", value: `${stats.stress}/100`, helper: "how shaky you feel" },
+            { label: "Cash", value: formatMoney(stats.cashDollars), helper: "not invested yet" },
+            { label: "Amount invested", value: formatMoney(stats.amountInvestedDollars), helper: "how much you put in" },
+            { label: "Portfolio value", value: formatMoney(stats.portfolioValueDollars), helper: "what it is worth now" },
           ].map((stat) => (
             <View key={stat.label} style={styles.statChip}>
               <Text style={styles.statChipLabel}>{stat.label}</Text>
