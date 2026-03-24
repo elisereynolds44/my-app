@@ -399,6 +399,28 @@ function formatMoney(value: number) {
   }).format(value);
 }
 
+function getEffectBadges(effects: Partial<Stats>) {
+  const badges: string[] = [];
+
+  if (effects.investedDollars) {
+    badges.push(`${effects.investedDollars > 0 ? "+" : "-"}Invested`);
+  }
+
+  if (effects.savingsDollars) {
+    badges.push(`${effects.savingsDollars > 0 ? "+" : "-"}Savings`);
+  }
+
+  if (effects.confidence) {
+    badges.push(`${effects.confidence > 0 ? "+" : "-"}Confidence`);
+  }
+
+  if (effects.stress) {
+    badges.push(`${effects.stress > 0 ? "+" : "-"}Stress`);
+  }
+
+  return badges.slice(0, 3);
+}
+
 function getSimJob() {
   return "entry-level software engineer";
 }
@@ -578,6 +600,7 @@ export default function SimulationOneScreen() {
                     <View style={styles.choices}>
                       {step.choices.map((choice) => {
                         const selected = selectedChoiceId === choice.id;
+                        const badges = getEffectBadges(choice.effects);
                         return (
                           <TouchableOpacity
                             key={choice.id}
@@ -587,6 +610,13 @@ export default function SimulationOneScreen() {
                             <Text style={[styles.choiceButtonText, selected && styles.choiceButtonTextSelected]}>
                               {choice.label}
                             </Text>
+                            <View style={styles.choiceBadgeRow}>
+                              {badges.map((badge) => (
+                                <View key={badge} style={styles.choiceBadge}>
+                                  <Text style={styles.choiceBadgeText}>{badge}</Text>
+                                </View>
+                              ))}
+                            </View>
                           </TouchableOpacity>
                         );
                       })}
@@ -928,6 +958,23 @@ const styles = StyleSheet.create({
   },
   choiceButtonTextSelected: {
     color: WHITE,
+  },
+  choiceBadgeRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 10,
+  },
+  choiceBadge: {
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  choiceBadgeText: {
+    color: MUTED,
+    fontSize: 11,
+    fontWeight: "900",
   },
   resultCard: {
     borderRadius: 18,
