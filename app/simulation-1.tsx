@@ -519,6 +519,40 @@ function getEffectBadges(effects: Partial<Stats>) {
   return badges.slice(0, 3);
 }
 
+function getChoiceCopy(choiceId: string) {
+  const labels: Record<string, { title: string; sublabel: string }> = {
+    "small-start": { title: "Start small", sublabel: "low pressure" },
+    "all-in": { title: "Go big", sublabel: "high conviction" },
+    "wait": { title: "Wait", sublabel: "watch first" },
+    "add-small": { title: "Add more", sublabel: "steady build" },
+    "hold": { title: "Hold", sublabel: "stay calm" },
+    "chase": { title: "Chase", sublabel: "fear of missing out" },
+    "check-business": { title: "Check the business", sublabel: "read the numbers" },
+    "celebrate": { title: "Buy the hype", sublabel: "headline first" },
+    "ignore-revenue": { title: "Ignore it", sublabel: "watch price only" },
+    "compare-metrics": { title: "Compare metrics", sublabel: "revenue vs profit" },
+    "panic-sell": { title: "Panic sell", sublabel: "cut risk fast" },
+    "average-down-fast": { title: "Buy the dip", sublabel: "move fast" },
+    "zoom-out": { title: "Zoom out", sublabel: "ignore the noise" },
+    "join-hype": { title: "Join hype", sublabel: "ride momentum" },
+    "sell-noise": { title: "Exit", sublabel: "too chaotic" },
+    "check-indexes-first": { title: "Check indexes", sublabel: "market or stock?" },
+    "sell-on-fear": { title: "Sell on fear", sublabel: "get out now" },
+    "buy-with-thesis": { title: "Buy with thesis", sublabel: "conviction only" },
+    "separate-ideas": { title: "Separate price/value", sublabel: "think clearly" },
+    "ignore-price": { title: "Ignore price", sublabel: "great company = buy?" },
+    "give-up": { title: "Step away", sublabel: "too complicated" },
+    "use-checklist": { title: "Use checklist", sublabel: "process first" },
+    "keep-vibes": { title: "Go with vibes", sublabel: "fast instinct" },
+    "copy-online": { title: "Copy others", sublabel: "borrow conviction" },
+    "patient": { title: "Stay patient", sublabel: "long-term focus" },
+    "flip": { title: "Keep flipping", sublabel: "react to moves" },
+    "step-back": { title: "Regroup", sublabel: "pause and reset" },
+  };
+
+  return labels[choiceId] ?? { title: "Make a move", sublabel: "choose carefully" };
+}
+
 function getSimJob() {
   return "entry-level software engineer";
 }
@@ -1011,6 +1045,7 @@ export default function SimulationOneScreen() {
                     {step.choices.map((choice) => {
                       const selected = selectedChoiceId === choice.id;
                       const badges = getEffectBadges(choice.effects);
+                      const copy = getChoiceCopy(choice.id);
                       const actionLabel = choice.id === step.choices[0].id ? "A" : choice.id === step.choices[1].id ? "B" : "C";
                       return (
                         <TouchableOpacity
@@ -1036,9 +1071,14 @@ export default function SimulationOneScreen() {
                                 {actionLabel}
                               </Text>
                             </View>
-                            <Text style={[styles.choiceButtonText, selected && styles.choiceButtonTextSelected]}>
-                              {choice.label}
-                            </Text>
+                            <View style={styles.choiceTextWrap}>
+                              <Text style={[styles.choiceButtonText, selected && styles.choiceButtonTextSelected]}>
+                                {copy.title}
+                              </Text>
+                              <Text style={[styles.choiceSubtext, selected && styles.choiceSubtextSelected]}>
+                                {copy.sublabel}
+                              </Text>
+                            </View>
                           </View>
                           <View style={styles.choiceBadgeRow}>
                               {badges.map((badge) => (
@@ -1621,6 +1661,10 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     gap: 10,
   },
+  choiceTextWrap: {
+    flex: 1,
+    gap: 3,
+  },
   choiceActionTag: {
     width: 28,
     height: 28,
@@ -1642,12 +1686,19 @@ const styles = StyleSheet.create({
   },
   choiceButtonText: {
     color: WHITE,
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "800",
-    lineHeight: 20,
-    flex: 1,
+    lineHeight: 18,
   },
   choiceButtonTextSelected: {
+    color: WHITE,
+  },
+  choiceSubtext: {
+    color: MUTED,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  choiceSubtextSelected: {
     color: WHITE,
   },
   choiceBadgeRow: {
