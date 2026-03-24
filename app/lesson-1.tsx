@@ -17,6 +17,13 @@ type LessonStep =
   | { kind: "pick"; kicker: string; title: string; prompt: string; options: string[] }
   | { kind: "info"; kicker: string; title: string; body: string }
   | {
+      kind: "terms";
+      kicker: string;
+      title: string;
+      intro: string;
+      items: { label: string; meaning: string; whyItMatters: string }[];
+    }
+  | {
       kind: "example";
       kicker: string;
       title: string;
@@ -140,6 +147,79 @@ export default function LessonOneScreen() {
           "News headlines tell you what new information might be changing expectations.",
           "Valuation metrics help you ask whether the stock already looks expensive.",
         ],
+      },
+      {
+        kind: "terms",
+        kicker: "STOCK SCREEN",
+        title: "What the main stock words mean.",
+        intro:
+          "When you open a stock screen, you are usually seeing a quick summary of today's trading session. These labels help you understand what happened before you decide what it means.",
+        items: [
+          {
+            label: "Open",
+            meaning: "The price where the stock started trading when the market opened.",
+            whyItMatters: "It gives you a baseline for how the day began.",
+          },
+          {
+            label: "Prev Close",
+            meaning: "The stock's closing price from the previous trading day.",
+            whyItMatters: "It helps you compare today with yesterday.",
+          },
+          {
+            label: "High",
+            meaning: "The highest price the stock reached during the day.",
+            whyItMatters: "It shows how far buyers were willing to push it.",
+          },
+          {
+            label: "Low",
+            meaning: "The lowest price the stock hit during the day.",
+            whyItMatters: "It shows how much downside pressure showed up.",
+          },
+        ],
+      },
+      {
+        kind: "terms",
+        kicker: "STOCK SCREEN",
+        title: "A few more labels you will keep seeing.",
+        intro:
+          "These are the other clues from the stock board that beginners often see first. You do not need to memorize them instantly, but you should know what each one is trying to tell you.",
+        items: [
+          {
+            label: "Day Range",
+            meaning: "The span between the day's low price and high price.",
+            whyItMatters: "It tells you how calm or volatile the stock was today.",
+          },
+          {
+            label: "Volume",
+            meaning: "How many shares traded hands during the day.",
+            whyItMatters: "Higher volume can mean more attention, conviction, or panic.",
+          },
+          {
+            label: "Trend",
+            meaning: "A short summary of the current story, like hype, profit pressure, or sector news.",
+            whyItMatters: "It gives context for why the stock might be moving.",
+          },
+          {
+            label: "Move %",
+            meaning: "How much the stock is up or down compared with a reference price, usually the previous close.",
+            whyItMatters: "It helps you see the size of the move fast, not just the direction.",
+          },
+        ],
+      },
+      {
+        kind: "question",
+        kicker: "QUIZ",
+        title: "Reading a stock screen",
+        prompt: "If volume jumps and the day range gets much wider, that usually means:",
+        options: [
+          { key: "A", text: "More trading activity and a bigger move than usual." },
+          { key: "B", text: "The company guaranteed a profit." },
+          { key: "C", text: "The stock screen is broken." },
+        ],
+        correct: "A",
+        correctMsg: "Correct. Bigger volume and a wider range usually mean a more active, more dramatic trading day.",
+        wrongMsg:
+          "Not quite. Volume and day range are clues about how active and volatile the stock was, not guarantees.",
       },
       {
         kind: "question",
@@ -634,6 +714,25 @@ export default function LessonOneScreen() {
 
         {step.kind === "info" && <Text style={styles.body}>{step.body}</Text>}
 
+        {step.kind === "terms" && (
+          <>
+            <Text style={styles.body}>{step.intro}</Text>
+            <View style={{ height: 14 }} />
+            <View style={styles.termStack}>
+              {step.items.map((item) => (
+                <View key={item.label} style={styles.termCard}>
+                  <Text style={styles.termLabel}>{item.label}</Text>
+                  <Text style={styles.termMeaning}>{item.meaning}</Text>
+                  <Text style={styles.termWhy}>
+                    <Text style={styles.termWhyLabel}>Why it matters: </Text>
+                    {item.whyItMatters}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </>
+        )}
+
         {step.kind === "example" && (
           <>
             <Text style={styles.body}>{step.scenario(brand)}</Text>
@@ -1085,6 +1184,37 @@ const styles = StyleSheet.create({
   },
   metricStack: {
     gap: 12,
+  },
+  termStack: {
+    gap: 10,
+  },
+  termCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: BORDER,
+    backgroundColor: "rgba(255,255,255,0.03)",
+    padding: 14,
+    gap: 8,
+  },
+  termLabel: {
+    color: WHITE,
+    fontSize: 16,
+    fontWeight: "900",
+  },
+  termMeaning: {
+    color: WHITE,
+    fontSize: 14,
+    lineHeight: 21,
+    fontWeight: "700",
+  },
+  termWhy: {
+    color: MUTED,
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  termWhyLabel: {
+    color: GREEN,
+    fontWeight: "900",
   },
   metricRow: {
     borderRadius: 16,
