@@ -346,11 +346,15 @@ function clampStat(value: number) {
   return Math.max(0, Math.min(100, value));
 }
 
+function clampMoney(value: number) {
+  return Math.max(0, value);
+}
+
 function applyEffects(stats: Stats, effects: Partial<Stats>): Stats {
   return {
-    annualIncome: clampStat(stats.annualIncome + (effects.annualIncome ?? 0)),
-    investedDollars: clampStat(stats.investedDollars + (effects.investedDollars ?? 0)),
-    savingsDollars: clampStat(stats.savingsDollars + (effects.savingsDollars ?? 0)),
+    annualIncome: clampMoney(stats.annualIncome + (effects.annualIncome ?? 0)),
+    investedDollars: clampMoney(stats.investedDollars + (effects.investedDollars ?? 0)),
+    savingsDollars: clampMoney(stats.savingsDollars + (effects.savingsDollars ?? 0)),
     confidence: clampStat(stats.confidence + (effects.confidence ?? 0)),
     stress: clampStat(stats.stress + (effects.stress ?? 0)),
   };
