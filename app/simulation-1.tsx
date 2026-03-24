@@ -597,6 +597,8 @@ function getWatchlist(step: SimulationStep, brand: string) {
     { symbol: "MCD", label: "McDonald's", move: "-0.8%", active: false },
     { symbol: "SBUX", label: "Starbucks", move: "+1.3%", active: false },
     { symbol: "YUM", label: "Yum! Brands", move: "-1.1%", active: false },
+    { symbol: "WEN", label: "Wendy's", move: "+0.9%", active: false },
+    { symbol: "QSR", label: "Restaurant Brands", move: "+0.4%", active: false },
   ];
 }
 
