@@ -382,6 +382,74 @@ function getStepMovePct(stepId: string) {
   return moves[stepId] ?? 0;
 }
 
+function getDecisionPrompt(step: SimulationStep, brand: string, job: string) {
+  const prompts: Record<string, string> = {
+    "week-1": `You know ${brand}, you trust the story, and your ${job} paycheck is finally giving you room to start.`,
+    "month-1": `${brand} is up a little and you just got paid. Momentum feels tempting.`,
+    "month-2": `${brand} posted strong revenue and the market is getting excited fast.`,
+    "month-3": `${brand} still has demand, but weaker profit is making investors nervous.`,
+    "month-4": `${brand} is suddenly everywhere online and the hype is getting loud.`,
+    "month-6": `Fast food stocks are selling off hard. The big question is whether this is your company or the whole market.`,
+    "month-8": `${brand} still looks strong, but the stock is starting to look expensive.`,
+    "month-10": `You have enough experience now to choose process over impulse.`,
+    "year-1": `The market gave you a full year of noise. Now your habits matter more than one headline.`,
+  };
+
+  return prompts[step.id] ?? step.body(brand, job);
+}
+
+function getStepClues(step: SimulationStep, brand: string) {
+  const clues: Record<string, { label: string; value: string }[]> = {
+    "week-1": [
+      { label: "Setup", value: `First buy in ${brand}` },
+      { label: "Risk", value: "Low pressure" },
+      { label: "Signal", value: "Nothing urgent yet" },
+    ],
+    "month-1": [
+      { label: "Move", value: "+4.2% this month" },
+      { label: "Emotion", value: "FOMO building" },
+      { label: "Question", value: "Add or stay calm?" },
+    ],
+    "month-2": [
+      { label: "Headline", value: "Revenue beat" },
+      { label: "Crowd", value: "Optimism rising" },
+      { label: "Question", value: "Story or substance?" },
+    ],
+    "month-3": [
+      { label: "Headline", value: "Profit missed" },
+      { label: "Pressure", value: "Costs up" },
+      { label: "Question", value: "Panic or analyze?" },
+    ],
+    "month-4": [
+      { label: "Headline", value: "Social hype" },
+      { label: "Risk", value: "Expectations stretched" },
+      { label: "Question", value: "Join or zoom out?" },
+    ],
+    "month-6": [
+      { label: "Headline", value: "Sector sell-off" },
+      { label: "Indexes", value: "Check the board" },
+      { label: "Question", value: "Fear or context?" },
+    ],
+    "month-8": [
+      { label: "Business", value: "Still solid" },
+      { label: "Valuation", value: "Looks rich" },
+      { label: "Question", value: "Great stock or pricey stock?" },
+    ],
+    "month-10": [
+      { label: "Mindset", value: "Checklist time" },
+      { label: "Upgrade", value: "Less vibes, more process" },
+      { label: "Question", value: "Can you stay consistent?" },
+    ],
+    "year-1": [
+      { label: "Time", value: "1 year later" },
+      { label: "Lesson", value: "Noise never left" },
+      { label: "Question", value: "Who did you become?" },
+    ],
+  };
+
+  return clues[step.id] ?? [{ label: "Signal", value: step.update(brand) }];
+}
+
 function getEnding(stats: Stats) {
   if (stats.confidence >= 65 && stats.stress <= 40) {
     return {
@@ -680,6 +748,8 @@ export default function SimulationOneScreen() {
   const quote = getQuoteSnapshot(step, resolvedBrand);
   const watchlist = getWatchlist(step, resolvedBrand);
   const totalPnl = stats.portfolioValueDollars - stats.amountInvestedDollars;
+  const decisionPrompt = getDecisionPrompt(step, resolvedBrand, simJob);
+  const stepClues = getStepClues(step, resolvedBrand);
 
   const handleChoice = () => {
     if (!selectedChoiceId) {
@@ -905,7 +975,15 @@ export default function SimulationOneScreen() {
                   <Text style={styles.eventBannerTime}>{step.timeLabel}</Text>
                 </View>
                 <Text style={styles.eventTitle}>{step.title}</Text>
-                <Text style={styles.eventBody}>{step.body(resolvedBrand, simJob)}</Text>
+                <Text style={styles.eventPrompt}>{decisionPrompt}</Text>
+                <View style={styles.clueRow}>
+                  {stepClues.map((clue) => (
+                    <View key={`${step.id}-${clue.label}`} style={styles.clueCard}>
+                      <Text style={styles.clueLabel}>{clue.label}</Text>
+                      <Text style={styles.clueValue}>{clue.value}</Text>
+                    </View>
+                  ))}
+                </View>
               </View>
 
               <View
@@ -917,7 +995,7 @@ export default function SimulationOneScreen() {
                   },
                 ]}
               >
-                <Text style={styles.choicePanelTitle}>What do you want to do?</Text>
+                <Text style={styles.choicePanelTitle}>Pick your move</Text>
 
                 {result ? (
                   <View style={[styles.resultCard, { borderColor: sceneTone.border, backgroundColor: sceneTone.soft }]}>
@@ -1444,10 +1522,46 @@ const styles = StyleSheet.create({
   },
   eventTitle: {
     color: WHITE,
-    fontSize: 28,
+    fontSize: 25,
     fontWeight: "900",
-    lineHeight: 34,
-    marginBottom: 10,
+    lineHeight: 31,
+    marginBottom: 8,
+  },
+  eventPrompt: {
+    color: WHITE,
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: "700",
+  },
+  clueRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 14,
+  },
+  clueCard: {
+    minWidth: "31%",
+    flex: 1,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.10)",
+    backgroundColor: "rgba(255,255,255,0.04)",
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+  },
+  clueLabel: {
+    color: MUTED,
+    fontSize: 10,
+    fontWeight: "900",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginBottom: 5,
+  },
+  clueValue: {
+    color: WHITE,
+    fontSize: 13,
+    fontWeight: "800",
+    lineHeight: 17,
   },
   eventBody: {
     color: MUTED,
@@ -1483,9 +1597,11 @@ const styles = StyleSheet.create({
   },
   choicePanelTitle: {
     color: WHITE,
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "900",
     marginBottom: 12,
+    textTransform: "uppercase",
+    letterSpacing: 0.7,
   },
   choices: {
     gap: 10,
