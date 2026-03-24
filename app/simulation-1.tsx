@@ -59,14 +59,14 @@ const STEPS: SimulationStep[] = [
         label: "Invest a small amount so you can start learning without panicking",
         reaction: "is feeling steady",
         explanation: "Small position sizes are often easier to stick with when you are still learning.",
-        effects: { cashDollars: -1200, amountInvestedDollars: 1200, portfolioValueDollars: 1200, confidence: 7, stress: -2 },
+        effects: { cashDollars: -2500, amountInvestedDollars: 2500, portfolioValueDollars: 2500, confidence: 7, stress: -2 },
       },
       {
         id: "all-in",
         label: "Go bigger because you already love the brand",
         reaction: "is running on vibes",
         explanation: "Loving a brand is a start, but it is not the same as sizing risk well.",
-        effects: { cashDollars: -2500, amountInvestedDollars: 2500, portfolioValueDollars: 2500, confidence: 4, stress: 12 },
+        effects: { cashDollars: -6000, amountInvestedDollars: 6000, portfolioValueDollars: 6000, confidence: 4, stress: 12 },
       },
       {
         id: "wait",
@@ -92,7 +92,7 @@ const STEPS: SimulationStep[] = [
         label: "Add a little more from this paycheck",
         reaction: "is building confidence",
         explanation: "Regular smaller additions can feel more manageable than one giant bet.",
-        effects: { annualIncome: 1500, cashDollars: -1000, amountInvestedDollars: 1000, portfolioValueDollars: 1000, confidence: 6, stress: 2 },
+        effects: { annualIncome: 1500, cashDollars: -1800, amountInvestedDollars: 1800, portfolioValueDollars: 1800, confidence: 6, stress: 2 },
       },
       {
         id: "hold",
@@ -106,7 +106,7 @@ const STEPS: SimulationStep[] = [
         label: "Rush in because you are afraid the stock is getting away from you",
         reaction: "is chasing a little",
         explanation: "FOMO can make even small price moves feel bigger than they are.",
-        effects: { annualIncome: 1500, cashDollars: -1800, amountInvestedDollars: 1800, portfolioValueDollars: 1800, confidence: 3, stress: 10 },
+        effects: { annualIncome: 1500, cashDollars: -3200, amountInvestedDollars: 3200, portfolioValueDollars: 3200, confidence: 3, stress: 10 },
       },
     ],
   },
@@ -165,14 +165,14 @@ const STEPS: SimulationStep[] = [
         label: "Sell because a weak profit quarter must mean the whole thesis is dead",
         reaction: "is spiraling",
         explanation: "One disappointing metric is not always the same as a broken business.",
-        effects: { cashDollars: 1000, amountInvestedDollars: -1000, portfolioValueDollars: -1000, confidence: -8, stress: 6 },
+        effects: { cashDollars: 2200, amountInvestedDollars: -2200, portfolioValueDollars: -2200, confidence: -8, stress: 6 },
       },
       {
         id: "average-down-fast",
         label: "Buy more instantly without checking why profit dropped",
         reaction: "is moving too fast",
         explanation: "Speed is not the same thing as conviction.",
-        effects: { cashDollars: -1200, amountInvestedDollars: 1200, portfolioValueDollars: 1200, confidence: 2, stress: 10 },
+        effects: { cashDollars: -2500, amountInvestedDollars: 2500, portfolioValueDollars: 2500, confidence: 2, stress: 10 },
       },
     ],
   },
@@ -198,14 +198,14 @@ const STEPS: SimulationStep[] = [
         label: "Join the hype because it looks like easy money",
         reaction: "is chasing hype",
         explanation: "When everyone is excited, expectations can get inflated fast.",
-        effects: { cashDollars: -1000, amountInvestedDollars: 1000, portfolioValueDollars: 1000, confidence: 4, stress: 14 },
+        effects: { cashDollars: -2600, amountInvestedDollars: 2600, portfolioValueDollars: 2600, confidence: 4, stress: 14 },
       },
       {
         id: "sell-noise",
         label: "Sell just because the whole thing feels chaotic",
         reaction: "is reacting emotionally",
         explanation: "Chaos can be uncomfortable, but discomfort is not a full thesis either.",
-        effects: { cashDollars: 1400, amountInvestedDollars: -1400, portfolioValueDollars: -1400, confidence: -2, stress: 4 },
+        effects: { cashDollars: 2400, amountInvestedDollars: -2400, portfolioValueDollars: -2400, confidence: -2, stress: 4 },
       },
     ],
   },
@@ -231,14 +231,14 @@ const STEPS: SimulationStep[] = [
         label: "Dump the stock because the whole industry sounds doomed",
         reaction: "is panic-selling",
         explanation: "Sector fear can be real, but panic is rarely the cleanest decision tool.",
-        effects: { cashDollars: 1600, amountInvestedDollars: -1600, portfolioValueDollars: -1600, confidence: -7, stress: 8 },
+        effects: { cashDollars: 3200, amountInvestedDollars: -3200, portfolioValueDollars: -3200, confidence: -7, stress: 8 },
       },
       {
         id: "buy-with-thesis",
         label: "Add a little only if you still believe the business can handle the pressure",
         reaction: "is acting with conviction",
         explanation: "Buying during fear only makes sense when the reasoning is still intact.",
-        effects: { cashDollars: -1000, amountInvestedDollars: 1000, portfolioValueDollars: 1000, confidence: 5, stress: 5 },
+        effects: { cashDollars: -2200, amountInvestedDollars: 2200, portfolioValueDollars: 2200, confidence: 5, stress: 5 },
       },
     ],
   },
@@ -364,6 +364,22 @@ function applyEffects(stats: Stats, effects: Partial<Stats>): Stats {
     confidence: clampStat(stats.confidence + (effects.confidence ?? 0)),
     stress: clampStat(stats.stress + (effects.stress ?? 0)),
   };
+}
+
+function getStepMovePct(stepId: string) {
+  const moves: Record<string, number> = {
+    "week-1": 0.006,
+    "month-1": 0.042,
+    "month-2": 0.058,
+    "month-3": -0.065,
+    "month-4": 0.091,
+    "month-6": -0.128,
+    "month-8": -0.032,
+    "month-10": 0.046,
+    "year-1": 0.084,
+  };
+
+  return moves[stepId] ?? 0;
 }
 
 function getEnding(stats: Stats) {
@@ -629,6 +645,7 @@ export default function SimulationOneScreen() {
   });
   const [selectedChoiceId, setSelectedChoiceId] = useState<string | null>(null);
   const [result, setResult] = useState<Choice | null>(null);
+  const [roundPnl, setRoundPnl] = useState(0);
 
   useEffect(() => {
     if (params.brand) {
@@ -662,6 +679,7 @@ export default function SimulationOneScreen() {
   const sceneTone = getSceneTone(step);
   const quote = getQuoteSnapshot(step, resolvedBrand);
   const watchlist = getWatchlist(step, resolvedBrand);
+  const totalPnl = stats.portfolioValueDollars - stats.amountInvestedDollars;
 
   const handleChoice = () => {
     if (!selectedChoiceId) {
@@ -674,7 +692,16 @@ export default function SimulationOneScreen() {
       return;
     }
 
-    setStats((current) => applyEffects(current, selected.effects));
+    const movePct = getStepMovePct(step.id);
+    setStats((current) => {
+      const afterChoice = applyEffects(current, selected.effects);
+      const portfolioSwing = Math.round(afterChoice.portfolioValueDollars * movePct);
+      setRoundPnl(portfolioSwing);
+      return {
+        ...afterChoice,
+        portfolioValueDollars: clampMoney(afterChoice.portfolioValueDollars + portfolioSwing),
+      };
+    });
     setResult(selected);
   };
 
@@ -687,6 +714,7 @@ export default function SimulationOneScreen() {
     setStepIndex((current) => current + 1);
     setSelectedChoiceId(null);
     setResult(null);
+    setRoundPnl(0);
   };
 
   return (
@@ -756,6 +784,23 @@ export default function SimulationOneScreen() {
               <Text style={styles.statChipHelper}>{stat.helper}</Text>
             </View>
           ))}
+        </View>
+
+        <View style={styles.pnlRow}>
+          <View style={styles.pnlCard}>
+            <Text style={styles.pnlLabel}>This round</Text>
+            <Text style={[styles.pnlValue, roundPnl >= 0 ? styles.pnlUp : styles.pnlDown]}>
+              {roundPnl >= 0 ? "+" : "-"}
+              {formatMoney(Math.abs(roundPnl))}
+            </Text>
+          </View>
+          <View style={styles.pnlCard}>
+            <Text style={styles.pnlLabel}>Total gain/loss</Text>
+            <Text style={[styles.pnlValue, totalPnl >= 0 ? styles.pnlUp : styles.pnlDown]}>
+              {totalPnl >= 0 ? "+" : "-"}
+              {formatMoney(Math.abs(totalPnl))}
+            </Text>
+          </View>
         </View>
 
         {!isFinished ? (
@@ -878,6 +923,10 @@ export default function SimulationOneScreen() {
                   <View style={[styles.resultCard, { borderColor: sceneTone.border, backgroundColor: sceneTone.soft }]}>
                     <Text style={styles.resultTitle}>{selectedCharacter?.emoji ?? "✨"} {result.reaction}</Text>
                     <Text style={styles.resultText}>{result.explanation}</Text>
+                    <Text style={[styles.resultPnl, roundPnl >= 0 ? styles.pnlUp : styles.pnlDown]}>
+                      Portfolio move this round: {roundPnl >= 0 ? "+" : "-"}
+                      {formatMoney(Math.abs(roundPnl))}
+                    </Text>
                   </View>
                 ) : (
                   <View style={styles.choices}>
@@ -1113,7 +1162,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 10,
-    marginBottom: 18,
+    marginBottom: 12,
   },
   statChip: {
     width: "47%",
@@ -1140,6 +1189,37 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 15,
     marginTop: 6,
+  },
+  pnlRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 18,
+  },
+  pnlCard: {
+    flex: 1,
+    borderRadius: 14,
+    backgroundColor: "#0A1322",
+    borderWidth: 1,
+    borderColor: BORDER,
+    padding: 12,
+  },
+  pnlLabel: {
+    color: MUTED,
+    fontSize: 11,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+  },
+  pnlValue: {
+    fontSize: 23,
+    fontWeight: "900",
+    marginTop: 8,
+  },
+  pnlUp: {
+    color: GREEN,
+  },
+  pnlDown: {
+    color: "#F87171",
   },
   marketBoard: {
     flexDirection: "row",
@@ -1491,6 +1571,10 @@ const styles = StyleSheet.create({
     color: MUTED,
     fontSize: 14,
     lineHeight: 21,
+  },
+  resultPnl: {
+    fontSize: 13,
+    fontWeight: "900",
   },
   footer: {
     marginTop: 18,
