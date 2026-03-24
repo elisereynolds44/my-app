@@ -604,11 +604,12 @@ function getWatchlist(step: SimulationStep, brand: string) {
 
   return [
     { symbol: mainSymbol, label: brand, move: getStepMove(step), active: true },
+    { symbol: "SPX", label: "S&P 500", move: "+0.5%", active: false },
+    { symbol: "IXIC", label: "Nasdaq", move: "+0.8%", active: false },
+    { symbol: "DJI", label: "Dow Jones", move: "-0.1%", active: false },
     { symbol: "MCD", label: "McDonald's", move: "-0.8%", active: false },
     { symbol: "SBUX", label: "Starbucks", move: "+1.3%", active: false },
     { symbol: "YUM", label: "Yum! Brands", move: "-1.1%", active: false },
-    { symbol: "WEN", label: "Wendy's", move: "+0.9%", active: false },
-    { symbol: "QSR", label: "Restaurant Brands", move: "+0.4%", active: false },
   ];
 }
 

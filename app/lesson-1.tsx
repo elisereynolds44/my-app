@@ -17,6 +17,13 @@ type LessonStep =
   | { kind: "pick"; kicker: string; title: string; prompt: string; options: string[] }
   | { kind: "info"; kicker: string; title: string; body: string }
   | {
+      kind: "indices";
+      kicker: string;
+      title: string;
+      intro: string;
+      items: { symbol: string; label: string; move: string; whyItMatters: string }[];
+    }
+  | {
       kind: "terms";
       kicker: string;
       title: string;
@@ -205,6 +212,48 @@ export default function LessonOneScreen() {
             whyItMatters: "It helps you see the size of the move fast, not just the direction.",
           },
         ],
+      },
+      {
+        kind: "indices",
+        kicker: "MARKET CONTEXT",
+        title: "Why people watch the big three indexes.",
+        intro:
+          "A single stock can move because of company news, but sometimes the whole market is moving together. Following the main indexes helps you tell the difference between a brand-specific story and a bigger market day.",
+        items: [
+          {
+            symbol: "S&P 500",
+            label: "A broad snapshot of large U.S. companies",
+            move: "+0.7%",
+            whyItMatters: "It helps you see whether the overall market is having a strong or weak day.",
+          },
+          {
+            symbol: "Nasdaq",
+            label: "A tech-heavy growth-focused index",
+            move: "+1.1%",
+            whyItMatters: "It gives you a sense of how growth stocks and risk appetite are behaving.",
+          },
+          {
+            symbol: "Dow",
+            label: "A simpler blue-chip market barometer",
+            move: "-0.2%",
+            whyItMatters: "It is a quick signal for how big household-name companies are trading.",
+          },
+        ],
+      },
+      {
+        kind: "question",
+        kicker: "QUIZ",
+        title: "Why indexes matter",
+        prompt: "If your fast food stock drops but the big indexes are also down that day, that may mean:",
+        options: [
+          { key: "A", text: "The whole market is weak, not just your company." },
+          { key: "B", text: "Your company definitely failed." },
+          { key: "C", text: "Indexes have nothing to do with it." },
+        ],
+        correct: "A",
+        correctMsg: "Correct. Sometimes a stock drops because the whole market is selling off, not because something changed about that one business.",
+        wrongMsg:
+          "Not quite. Following the indexes helps you tell when a move is broad market pressure instead of only company-specific news.",
       },
       {
         kind: "question",
@@ -733,6 +782,47 @@ export default function LessonOneScreen() {
           </>
         )}
 
+        {step.kind === "indices" && (
+          <>
+            <Text style={styles.body}>{step.intro}</Text>
+            <View style={{ height: 14 }} />
+            <View style={styles.indicesBoard}>
+              <Text style={styles.indicesHeading}>Major indexes</Text>
+              {step.items.map((item) => {
+                const isPositive = item.move.includes("+");
+                return (
+                  <View key={item.symbol} style={styles.indexRow}>
+                    <View style={styles.indexSymbolWrap}>
+                      <Text style={styles.indexSymbol}>{item.symbol}</Text>
+                      <Text style={styles.indexLabel}>{item.label}</Text>
+                    </View>
+                    <Text
+                      style={[
+                        styles.indexMove,
+                        { color: isPositive ? GREEN : BAD },
+                      ]}
+                    >
+                      {item.move}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+            <View style={{ height: 12 }} />
+            <View style={styles.termStack}>
+              {step.items.map((item) => (
+                <View key={`${item.symbol}-why`} style={styles.termCard}>
+                  <Text style={styles.termLabel}>{item.symbol}</Text>
+                  <Text style={styles.termWhy}>
+                    <Text style={styles.termWhyLabel}>Why follow it: </Text>
+                    {item.whyItMatters}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </>
+        )}
+
         {step.kind === "example" && (
           <>
             <Text style={styles.body}>{step.scenario(brand)}</Text>
@@ -1187,6 +1277,52 @@ const styles = StyleSheet.create({
   },
   termStack: {
     gap: 10,
+  },
+  indicesBoard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: BORDER,
+    backgroundColor: "#09111D",
+    padding: 12,
+    gap: 8,
+  },
+  indicesHeading: {
+    color: MUTED,
+    fontSize: 11,
+    fontWeight: "900",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginBottom: 4,
+  },
+  indexRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    backgroundColor: "#0D1728",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 10,
+  },
+  indexSymbolWrap: {
+    flex: 1,
+  },
+  indexSymbol: {
+    color: WHITE,
+    fontSize: 15,
+    fontWeight: "900",
+  },
+  indexLabel: {
+    color: MUTED,
+    fontSize: 12,
+    marginTop: 2,
+    lineHeight: 17,
+  },
+  indexMove: {
+    fontSize: 14,
+    fontWeight: "900",
   },
   termCard: {
     borderRadius: 16,
