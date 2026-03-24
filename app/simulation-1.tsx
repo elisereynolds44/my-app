@@ -429,6 +429,116 @@ function getSimJob() {
   return "entry-level software engineer";
 }
 
+function getMarketTone(value: string) {
+  if (value.includes("-")) {
+    return {
+      accent: "#F87171",
+      background: "rgba(248,113,113,0.10)",
+      border: "rgba(248,113,113,0.25)",
+      label: "Down move",
+    };
+  }
+
+  if (value.includes("+") || value === "Beat") {
+    return {
+      accent: GREEN,
+      background: "rgba(126,214,165,0.10)",
+      border: "rgba(126,214,165,0.25)",
+      label: "Up move",
+    };
+  }
+
+  return {
+    accent: "#FACC15",
+    background: "rgba(250,204,21,0.10)",
+    border: "rgba(250,204,21,0.25)",
+    label: "Mixed move",
+  };
+}
+
+function getBrandSymbol(brand: string) {
+  const normalized = brand.toLowerCase();
+
+  if (normalized.includes("chipotle")) return "CMG";
+  if (normalized.includes("mcd")) return "MCD";
+  if (normalized.includes("starbucks")) return "SBUX";
+  if (normalized.includes("wendy")) return "WEN";
+  if (normalized.includes("yum")) return "YUM";
+  if (normalized.includes("shake shack")) return "SHAK";
+  if (normalized.includes("domino")) return "DPZ";
+
+  return "FOOD";
+}
+
+function getStepMove(step: SimulationStep) {
+  const raw = step.marketValue;
+
+  if (raw.includes("+") || raw.includes("-")) {
+    return raw;
+  }
+
+  switch (step.id) {
+    case "week-1":
+      return "+0.6%";
+    case "month-2":
+      return "+5.8%";
+    case "month-3":
+      return "-4.1%";
+    case "month-4":
+      return "+7.3%";
+    case "month-6":
+      return "-9.4%";
+    case "month-8":
+      return "-1.2%";
+    case "month-10":
+      return "+2.1%";
+    case "year-1":
+      return "+12.7%";
+    default:
+      return "+0.0%";
+  }
+}
+
+function getQuoteSnapshot(step: SimulationStep, brand: string) {
+  const snapshots: Record<string, { price: number; open: number; high: number; low: number; prevClose: number; volume: string }> = {
+    "week-1": { price: 61.42, open: 61.08, high: 61.75, low: 60.81, prevClose: 61.05, volume: "1.8M" },
+    "month-1": { price: 63.97, open: 63.4, high: 64.28, low: 63.16, prevClose: 61.39, volume: "2.1M" },
+    "month-2": { price: 67.68, open: 65.7, high: 68.04, low: 65.44, prevClose: 64.0, volume: "3.4M" },
+    "month-3": { price: 64.9, open: 66.82, high: 67.0, low: 64.38, prevClose: 67.68, volume: "4.2M" },
+    "month-4": { price: 69.63, open: 67.2, high: 70.05, low: 66.91, prevClose: 64.9, volume: "5.1M" },
+    "month-6": { price: 58.47, open: 62.03, high: 62.11, low: 58.02, prevClose: 64.54, volume: "8.6M" },
+    "month-8": { price: 57.76, open: 58.5, high: 58.84, low: 57.1, prevClose: 58.46, volume: "2.9M" },
+    "month-10": { price: 58.98, open: 58.14, high: 59.22, low: 57.88, prevClose: 57.76, volume: "2.4M" },
+    "year-1": { price: 69.5, open: 68.73, high: 70.1, low: 68.11, prevClose: 68.01, volume: "3.2M" },
+  };
+
+  const fallback = snapshots["week-1"];
+  const current = snapshots[step.id] ?? fallback;
+  const symbol = getBrandSymbol(brand);
+
+  return {
+    ...current,
+    symbol,
+    move: getStepMove(step),
+    priceLabel: formatMoney(current.price),
+    rangeWidthPct:
+      current.high === current.low
+        ? 50
+        : ((current.price - current.low) / (current.high - current.low)) * 100,
+  };
+}
+
+function getWatchlist(step: SimulationStep, brand: string) {
+  const mainSymbol = getBrandSymbol(brand);
+
+  return [
+    { symbol: mainSymbol, label: brand, move: getStepMove(step), active: true },
+    { symbol: "MCD", label: "McDonald's", move: "-0.8%", active: false },
+    { symbol: "SBUX", label: "Starbucks", move: "+1.3%", active: false },
+    { symbol: "YUM", label: "Yum! Brands", move: "-1.1%", active: false },
+  ];
+}
+
 export default function SimulationOneScreen() {
   const { profile, selectedCharacter } = useProfile();
   const params = useLocalSearchParams<{ brand?: string }>();
@@ -472,6 +582,9 @@ export default function SimulationOneScreen() {
   const progressPct = Math.round((Math.min(stepIndex + 1, STEPS.length) / STEPS.length) * 100);
   const resolvedBrand = brand || "your chosen fast food brand";
   const simJob = useMemo(() => getSimJob(), []);
+  const marketTone = getMarketTone(step.marketValue);
+  const quote = getQuoteSnapshot(step, resolvedBrand);
+  const watchlist = getWatchlist(step, resolvedBrand);
 
   const handleChoice = () => {
     if (!selectedChoiceId) {
@@ -570,63 +683,131 @@ export default function SimulationOneScreen() {
 
         {!isFinished ? (
           <>
-            <View style={styles.timelineSection}>
-              <View style={styles.timelineRail}>
-                <View style={styles.timelineDot} />
-                <View style={styles.timelineLine} />
+            <View style={styles.marketBoard}>
+              <View style={styles.watchlistColumn}>
+                <Text style={styles.watchlistHeading}>Market</Text>
+                {watchlist.map((item) => {
+                  const tone = getMarketTone(item.move);
+                  return (
+                    <View
+                      key={`${step.id}-${item.symbol}`}
+                      style={[
+                        styles.watchlistCard,
+                        item.active && styles.watchlistCardActive,
+                        item.active && { borderColor: tone.border, backgroundColor: tone.background },
+                      ]}
+                    >
+                      <Text style={styles.watchlistSymbol}>{item.symbol}</Text>
+                      <Text style={styles.watchlistLabel} numberOfLines={1}>
+                        {item.label}
+                      </Text>
+                      <Text style={[styles.watchlistMove, { color: tone.accent }]}>{item.move}</Text>
+                    </View>
+                  );
+                })}
               </View>
 
-              <View style={styles.timelineContent}>
+              <View style={styles.quotePanel}>
                 <View style={styles.timeChipRow}>
                   <Text style={styles.timeChip}>{step.timeLabel}</Text>
-                  <Text style={styles.timeMeta}>{step.marketLabel}</Text>
+                  <Text style={styles.timeMeta}>Tracking {quote.symbol}</Text>
                 </View>
 
-                <View style={styles.eventCard}>
-                  <Text style={styles.eventTitle}>{step.title}</Text>
-                  <Text style={styles.eventBody}>{step.body(resolvedBrand, simJob)}</Text>
+                <View style={styles.quoteHero}>
+                  <View style={styles.quoteHeroCopy}>
+                    <Text style={styles.quoteSymbol}>{quote.symbol}</Text>
+                    <Text style={styles.quoteBrand}>{resolvedBrand}</Text>
+                    <Text style={styles.quoteMeta}>Day view</Text>
+                  </View>
+                  <View style={styles.quoteValueWrap}>
+                    <Text style={styles.quotePrice}>{quote.priceLabel}</Text>
+                    <Text style={[styles.quoteMove, { color: marketTone.accent }]}>{quote.move}</Text>
+                  </View>
+                </View>
+
+                <View style={styles.quoteRangeCard}>
+                  <View style={styles.quoteRangeHeader}>
+                    <Text style={styles.quoteRangeTitle}>Day range</Text>
+                    <Text style={styles.quoteRangeValue}>
+                      {formatMoney(quote.low)} - {formatMoney(quote.high)}
+                    </Text>
+                  </View>
+                  <View style={styles.quoteRangeTrack}>
+                    <View
+                      style={[
+                        styles.quoteRangeThumb,
+                        {
+                          left: `${Math.max(4, Math.min(96, quote.rangeWidthPct))}%`,
+                          backgroundColor: marketTone.accent,
+                        },
+                      ]}
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.quoteStatsGrid}>
+                  {[
+                    { label: "Open", value: formatMoney(quote.open) },
+                    { label: "Prev close", value: formatMoney(quote.prevClose) },
+                    { label: "High", value: formatMoney(quote.high) },
+                    { label: "Low", value: formatMoney(quote.low) },
+                    { label: "Volume", value: quote.volume },
+                    { label: "Trend", value: step.marketLabel },
+                  ].map((item) => (
+                    <View key={item.label} style={styles.quoteStatCard}>
+                      <Text style={styles.quoteStatLabel}>{item.label}</Text>
+                      <Text style={styles.quoteStatValue}>{item.value}</Text>
+                    </View>
+                  ))}
                 </View>
 
                 <View style={styles.newsCard}>
-                  <Text style={styles.newsKicker}>{step.marketValue}</Text>
+                  <Text style={[styles.newsKicker, { color: marketTone.accent }]}>{step.marketValue}</Text>
                   <Text style={styles.newsText}>{step.update(resolvedBrand)}</Text>
                 </View>
+              </View>
+            </View>
 
-                <View style={styles.choicePanel}>
-                  <Text style={styles.choicePanelTitle}>What do you want to do?</Text>
+            <View style={styles.scenarioSection}>
+              <View style={styles.eventCard}>
+                <Text style={styles.eventTitle}>{step.title}</Text>
+                <Text style={styles.eventBody}>{step.body(resolvedBrand, simJob)}</Text>
+              </View>
 
-                  {result ? (
-                    <View style={styles.resultCard}>
-                      <Text style={styles.resultTitle}>{selectedCharacter?.emoji ?? "✨"} {result.reaction}</Text>
-                      <Text style={styles.resultText}>{result.explanation}</Text>
-                    </View>
-                  ) : (
-                    <View style={styles.choices}>
-                      {step.choices.map((choice) => {
-                        const selected = selectedChoiceId === choice.id;
-                        const badges = getEffectBadges(choice.effects);
-                        return (
-                          <TouchableOpacity
-                            key={choice.id}
-                            onPress={() => setSelectedChoiceId(choice.id)}
-                            style={[styles.choiceButton, selected && styles.choiceButtonSelected]}
-                          >
-                            <Text style={[styles.choiceButtonText, selected && styles.choiceButtonTextSelected]}>
-                              {choice.label}
-                            </Text>
-                            <View style={styles.choiceBadgeRow}>
-                              {badges.map((badge) => (
-                                <View key={badge} style={styles.choiceBadge}>
-                                  <Text style={styles.choiceBadgeText}>{badge}</Text>
-                                </View>
-                              ))}
-                            </View>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
-                  )}
-                </View>
+              <View style={styles.choicePanel}>
+                <Text style={styles.choicePanelTitle}>What do you want to do?</Text>
+
+                {result ? (
+                  <View style={styles.resultCard}>
+                    <Text style={styles.resultTitle}>{selectedCharacter?.emoji ?? "✨"} {result.reaction}</Text>
+                    <Text style={styles.resultText}>{result.explanation}</Text>
+                  </View>
+                ) : (
+                  <View style={styles.choices}>
+                    {step.choices.map((choice) => {
+                      const selected = selectedChoiceId === choice.id;
+                      const badges = getEffectBadges(choice.effects);
+                      return (
+                        <TouchableOpacity
+                          key={choice.id}
+                          onPress={() => setSelectedChoiceId(choice.id)}
+                          style={[styles.choiceButton, selected && styles.choiceButtonSelected]}
+                        >
+                          <Text style={[styles.choiceButtonText, selected && styles.choiceButtonTextSelected]}>
+                            {choice.label}
+                          </Text>
+                          <View style={styles.choiceBadgeRow}>
+                            {badges.map((badge) => (
+                              <View key={badge} style={styles.choiceBadge}>
+                                <Text style={styles.choiceBadgeText}>{badge}</Text>
+                              </View>
+                            ))}
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                )}
               </View>
             </View>
           </>
@@ -837,53 +1018,200 @@ const styles = StyleSheet.create({
     lineHeight: 15,
     marginTop: 6,
   },
-  timelineSection: {
+  marketBoard: {
     flexDirection: "row",
-    gap: 14,
+    gap: 10,
+    marginBottom: 16,
+    alignItems: "stretch",
+    backgroundColor: "#05070B",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    borderRadius: 12,
+    padding: 10,
   },
-  timelineRail: {
-    width: 22,
-    alignItems: "center",
+  watchlistColumn: {
+    width: 104,
+    gap: 6,
   },
-  timelineDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 999,
-    backgroundColor: GREEN,
-    marginTop: 6,
+  watchlistHeading: {
+    color: "#7F8A9A",
+    fontSize: 10,
+    fontWeight: "900",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    paddingHorizontal: 2,
   },
-  timelineLine: {
-    width: 2,
+  watchlistCard: {
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    backgroundColor: "#0B0E13",
+    paddingHorizontal: 10,
+    paddingVertical: 9,
+    gap: 2,
+  },
+  watchlistCardActive: {
+    backgroundColor: "#11151C",
+  },
+  watchlistSymbol: {
+    color: WHITE,
+    fontSize: 13,
+    fontWeight: "900",
+  },
+  watchlistLabel: {
+    color: "#8B96A8",
+    fontSize: 10,
+    lineHeight: 13,
+  },
+  watchlistMove: {
+    fontSize: 12,
+    fontWeight: "900",
+    marginTop: 4,
+  },
+  quotePanel: {
     flex: 1,
-    backgroundColor: "rgba(255,255,255,0.12)",
-    marginTop: 8,
-  },
-  timelineContent: {
-    flex: 1,
+    borderRadius: 8,
+    backgroundColor: "#0B0E13",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    padding: 14,
   },
   timeChipRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    marginBottom: 10,
+    marginBottom: 12,
   },
   timeChip: {
     color: GREEN,
-    fontSize: 13,
+    fontSize: 10,
     fontWeight: "900",
     textTransform: "uppercase",
-    letterSpacing: 0.8,
+    letterSpacing: 1,
     borderWidth: 1,
-    borderColor: "rgba(126,214,165,0.28)",
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    borderColor: "rgba(126,214,165,0.18)",
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     overflow: "hidden",
+    backgroundColor: "rgba(126,214,165,0.08)",
   },
   timeMeta: {
-    color: MUTED,
-    fontSize: 13,
+    color: "#7F8A9A",
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  quoteHero: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 10,
+    alignItems: "flex-start",
+    marginBottom: 12,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255,255,255,0.08)",
+  },
+  quoteHeroCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  quoteSymbol: {
+    color: WHITE,
+    fontSize: 31,
+    fontWeight: "900",
+    lineHeight: 34,
+  },
+  quoteBrand: {
+    color: WHITE,
+    fontSize: 14,
     fontWeight: "700",
+  },
+  quoteMeta: {
+    color: "#7F8A9A",
+    fontSize: 11,
+    marginTop: 3,
+  },
+  quoteValueWrap: {
+    alignItems: "flex-end",
+    gap: 2,
+  },
+  quotePrice: {
+    color: WHITE,
+    fontSize: 26,
+    fontWeight: "900",
+  },
+  quoteMove: {
+    fontSize: 14,
+    fontWeight: "900",
+  },
+  quoteRangeCard: {
+    borderRadius: 8,
+    backgroundColor: "#080B10",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    padding: 12,
+    marginBottom: 12,
+  },
+  quoteRangeHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 8,
+    marginBottom: 10,
+  },
+  quoteRangeTitle: {
+    color: "#7F8A9A",
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  quoteRangeValue: {
+    color: WHITE,
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  quoteRangeTrack: {
+    height: 4,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.12)",
+    position: "relative",
+    overflow: "visible",
+  },
+  quoteRangeThumb: {
+    position: "absolute",
+    top: -4,
+    width: 10,
+    height: 10,
+    borderRadius: 999,
+    marginLeft: -5,
+  },
+  quoteStatsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+  },
+  quoteStatCard: {
+    width: "48%",
+    borderRadius: 6,
+    backgroundColor: "#080B10",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    paddingHorizontal: 10,
+    paddingVertical: 9,
+  },
+  quoteStatLabel: {
+    color: "#7F8A9A",
+    fontSize: 10,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  quoteStatValue: {
+    color: WHITE,
+    fontSize: 13,
+    fontWeight: "900",
+    marginTop: 5,
+  },
+  scenarioSection: {
+    gap: 14,
   },
   eventCard: {
     borderRadius: 22,
@@ -906,24 +1234,23 @@ const styles = StyleSheet.create({
   },
   newsCard: {
     marginTop: 16,
-    borderRadius: 20,
-    backgroundColor: "rgba(126,214,165,0.08)",
+    borderRadius: 8,
+    backgroundColor: "#0A0D12",
     borderWidth: 1,
-    borderColor: "rgba(126,214,165,0.22)",
-    padding: 14,
+    borderColor: "rgba(255,255,255,0.08)",
+    padding: 12,
   },
   newsKicker: {
-    color: WHITE,
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: "900",
     marginBottom: 6,
     textTransform: "uppercase",
-    letterSpacing: 0.7,
+    letterSpacing: 0.8,
   },
   newsText: {
-    color: WHITE,
-    fontSize: 15,
-    lineHeight: 22,
+    color: "#DDE5EF",
+    fontSize: 13,
+    lineHeight: 19,
     fontWeight: "700",
   },
   choicePanel: {
