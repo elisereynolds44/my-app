@@ -16,11 +16,11 @@ const LAST_BRAND_KEY = "lesson1LastBrand";
 const COMPLETED_SIMULATION_KEY = "completedSimulation1";
 
 type Stats = {
-  income: number;
-  invested: number;
-  cash: number;
+  annualIncome: number;
+  investedDollars: number;
+  savingsDollars: number;
   confidence: number;
-  risk: number;
+  stress: number;
 };
 
 type Choice = {
@@ -58,21 +58,21 @@ const STEPS: SimulationStep[] = [
         label: "Invest a small amount so you can start learning without panicking",
         reaction: "is feeling steady",
         explanation: "Small position sizes are often easier to stick with when you are still learning.",
-        effects: { cash: -12, invested: 12, confidence: 7, risk: -2 },
+        effects: { savingsDollars: -1200, investedDollars: 1200, confidence: 7, stress: -2 },
       },
       {
         id: "all-in",
         label: "Go bigger because you already love the brand",
         reaction: "is running on vibes",
         explanation: "Loving a brand is a start, but it is not the same as sizing risk well.",
-        effects: { cash: -25, invested: 25, confidence: 4, risk: 12 },
+        effects: { savingsDollars: -2500, investedDollars: 2500, confidence: 4, stress: 12 },
       },
       {
         id: "wait",
         label: "Wait one more week and keep watching",
         reaction: "is being patient",
         explanation: "Patience is not failure. It can be part of building conviction.",
-        effects: { confidence: 3, risk: -4 },
+        effects: { confidence: 3, stress: -4 },
       },
     ],
   },
@@ -91,21 +91,21 @@ const STEPS: SimulationStep[] = [
         label: "Add a little more from this paycheck",
         reaction: "is building confidence",
         explanation: "Regular smaller additions can feel more manageable than one giant bet.",
-        effects: { income: 8, cash: -10, invested: 10, confidence: 6, risk: 2 },
+        effects: { annualIncome: 1500, savingsDollars: -1000, investedDollars: 1000, confidence: 6, stress: 2 },
       },
       {
         id: "hold",
         label: "Hold and learn instead of reacting to every green week",
         reaction: "is staying calm",
         explanation: "Not every small move needs a dramatic response.",
-        effects: { income: 8, confidence: 5, risk: -3 },
+        effects: { annualIncome: 1500, confidence: 5, stress: -3 },
       },
       {
         id: "chase",
         label: "Rush in because you are afraid the stock is getting away from you",
         reaction: "is chasing a little",
         explanation: "FOMO can make even small price moves feel bigger than they are.",
-        effects: { income: 8, cash: -18, invested: 18, confidence: 3, risk: 10 },
+        effects: { annualIncome: 1500, savingsDollars: -1800, investedDollars: 1800, confidence: 3, stress: 10 },
       },
     ],
   },
@@ -124,21 +124,21 @@ const STEPS: SimulationStep[] = [
         label: "Read past the headline and focus on what is driving the growth",
         reaction: "is thinking like an owner",
         explanation: "Revenue matters most when you understand why it is improving.",
-        effects: { confidence: 6, risk: -2 },
+        effects: { confidence: 6, stress: -2 },
       },
       {
         id: "celebrate",
         label: "Assume this means the stock is obviously a great buy now",
         reaction: "is getting overexcited",
         explanation: "Good business news does not automatically mean the stock is cheap.",
-        effects: { confidence: 4, risk: 8 },
+        effects: { confidence: 4, stress: 8 },
       },
       {
         id: "ignore-revenue",
         label: "Ignore the report because you only care about price movement",
         reaction: "is missing part of the story",
         explanation: "Price tells you what happened. Revenue helps explain why.",
-        effects: { confidence: -3, risk: 5 },
+        effects: { confidence: -3, stress: 5 },
       },
     ],
   },
@@ -157,21 +157,21 @@ const STEPS: SimulationStep[] = [
         label: "Compare revenue and profit before doing anything",
         reaction: "is staying analytical",
         explanation: "This is exactly where investors learn that revenue and profit can tell different stories.",
-        effects: { confidence: 7, risk: -4 },
+        effects: { confidence: 7, stress: -4 },
       },
       {
         id: "panic-sell",
         label: "Sell because a weak profit quarter must mean the whole thesis is dead",
         reaction: "is spiraling",
         explanation: "One disappointing metric is not always the same as a broken business.",
-        effects: { cash: 10, invested: -10, confidence: -8, risk: 6 },
+        effects: { savingsDollars: 1000, investedDollars: -1000, confidence: -8, stress: 6 },
       },
       {
         id: "average-down-fast",
         label: "Buy more instantly without checking why profit dropped",
         reaction: "is moving too fast",
         explanation: "Speed is not the same thing as conviction.",
-        effects: { cash: -12, invested: 12, confidence: 2, risk: 10 },
+        effects: { savingsDollars: -1200, investedDollars: 1200, confidence: 2, stress: 10 },
       },
     ],
   },
@@ -190,21 +190,21 @@ const STEPS: SimulationStep[] = [
         label: "Zoom out and remember hype is not the same as value",
         reaction: "is keeping perspective",
         explanation: "Noise can move prices, but it does not always improve the business.",
-        effects: { confidence: 6, risk: -7 },
+        effects: { confidence: 6, stress: -7 },
       },
       {
         id: "join-hype",
         label: "Join the hype because it looks like easy money",
         reaction: "is chasing hype",
         explanation: "When everyone is excited, expectations can get inflated fast.",
-        effects: { cash: -10, invested: 10, confidence: 4, risk: 14 },
+        effects: { savingsDollars: -1000, investedDollars: 1000, confidence: 4, stress: 14 },
       },
       {
         id: "sell-noise",
         label: "Sell just because the whole thing feels chaotic",
         reaction: "is reacting emotionally",
         explanation: "Chaos can be uncomfortable, but discomfort is not a full thesis either.",
-        effects: { cash: 14, invested: -14, confidence: -2, risk: 4 },
+        effects: { savingsDollars: 1400, investedDollars: -1400, confidence: -2, stress: 4 },
       },
     ],
   },
@@ -223,21 +223,21 @@ const STEPS: SimulationStep[] = [
         label: "Read the news carefully before reacting",
         reaction: "is keeping a level head",
         explanation: "Sometimes a scary headline matters. Sometimes it is just broad fear hitting everything at once.",
-        effects: { confidence: 7, risk: -6 },
+        effects: { confidence: 7, stress: -6 },
       },
       {
         id: "sell-on-fear",
         label: "Dump the stock because the whole industry sounds doomed",
         reaction: "is panic-selling",
         explanation: "Sector fear can be real, but panic is rarely the cleanest decision tool.",
-        effects: { cash: 16, invested: -16, confidence: -7, risk: 8 },
+        effects: { savingsDollars: 1600, investedDollars: -1600, confidence: -7, stress: 8 },
       },
       {
         id: "buy-with-thesis",
         label: "Add a little only if you still believe the business can handle the pressure",
         reaction: "is acting with conviction",
         explanation: "Buying during fear only makes sense when the reasoning is still intact.",
-        effects: { cash: -10, invested: 10, confidence: 5, risk: 5 },
+        effects: { savingsDollars: -1000, investedDollars: 1000, confidence: 5, stress: 5 },
       },
     ],
   },
@@ -256,21 +256,21 @@ const STEPS: SimulationStep[] = [
         label: "Treat company quality and stock price as two separate questions",
         reaction: "is seeing the full picture",
         explanation: "That is one of the biggest investing mindset shifts from Lesson 1.",
-        effects: { confidence: 8, risk: -6 },
+        effects: { confidence: 8, stress: -6 },
       },
       {
         id: "ignore-price",
         label: "Ignore price because a great company must always be a great investment",
         reaction: "is skipping valuation",
         explanation: "Overpaying can limit future upside even if the business stays solid.",
-        effects: { confidence: 2, risk: 10 },
+        effects: { confidence: 2, stress: 10 },
       },
       {
         id: "give-up",
         label: "Give up because investing feels more complicated than you expected",
         reaction: "is getting discouraged",
         explanation: "The complexity is real, but this is also the exact point where process starts helping.",
-        effects: { confidence: -6, risk: 4 },
+        effects: { confidence: -6, stress: 4 },
       },
     ],
   },
@@ -289,21 +289,21 @@ const STEPS: SimulationStep[] = [
         label: "Use the checklist before every move",
         reaction: "is building real conviction",
         explanation: "A repeatable framework beats random confidence almost every time.",
-        effects: { confidence: 9, risk: -9 },
+        effects: { confidence: 9, stress: -9 },
       },
       {
         id: "keep-vibes",
         label: "Keep going with gut instinct because it feels faster",
         reaction: "is trusting vibes again",
         explanation: "Fast choices can feel good but are harder to repeat well.",
-        effects: { confidence: 1, risk: 8 },
+        effects: { confidence: 1, stress: 8 },
       },
       {
         id: "copy-online",
         label: "Copy whoever sounds smartest online",
         reaction: "is borrowing conviction",
         explanation: "Borrowed conviction usually disappears during the next rough week.",
-        effects: { confidence: -4, risk: 9 },
+        effects: { confidence: -4, stress: 9 },
       },
     ],
   },
@@ -322,21 +322,21 @@ const STEPS: SimulationStep[] = [
         label: "Stay patient and focus on long-term business progress",
         reaction: "looks locked in",
         explanation: "That is the mindset this first module was trying to build.",
-        effects: { confidence: 10, risk: -10 },
+        effects: { confidence: 10, stress: -10 },
       },
       {
         id: "flip",
         label: "Keep jumping in and out on every move",
         reaction: "is exhausted",
         explanation: "Constant reacting makes it hard to tell signal from noise.",
-        effects: { confidence: -3, risk: 8 },
+        effects: { confidence: -3, stress: 8 },
       },
       {
         id: "step-back",
         label: "Step back, regroup, and come back with a better process",
         reaction: "is regrouping",
         explanation: "Sometimes the smartest move is pausing until your process catches up.",
-        effects: { confidence: 4, risk: -2 },
+        effects: { confidence: 4, stress: -2 },
       },
     ],
   },
@@ -348,30 +348,30 @@ function clampStat(value: number) {
 
 function applyEffects(stats: Stats, effects: Partial<Stats>): Stats {
   return {
-    income: clampStat(stats.income + (effects.income ?? 0)),
-    invested: clampStat(stats.invested + (effects.invested ?? 0)),
-    cash: clampStat(stats.cash + (effects.cash ?? 0)),
+    annualIncome: clampStat(stats.annualIncome + (effects.annualIncome ?? 0)),
+    investedDollars: clampStat(stats.investedDollars + (effects.investedDollars ?? 0)),
+    savingsDollars: clampStat(stats.savingsDollars + (effects.savingsDollars ?? 0)),
     confidence: clampStat(stats.confidence + (effects.confidence ?? 0)),
-    risk: clampStat(stats.risk + (effects.risk ?? 0)),
+    stress: clampStat(stats.stress + (effects.stress ?? 0)),
   };
 }
 
 function getEnding(stats: Stats) {
-  if (stats.confidence >= 65 && stats.risk <= 40) {
+  if (stats.confidence >= 65 && stats.stress <= 40) {
     return {
       title: "Steady Investor",
       body: "You learned to slow down, think clearly, and treat investing like a process instead of a mood.",
     };
   }
 
-  if (stats.risk >= 70) {
+  if (stats.stress >= 70) {
     return {
       title: "Hype Chaser",
       body: "You felt every swing fast and loud. The next step is learning how to pause before the market pulls you around.",
     };
   }
 
-  if (stats.cash >= 75 && stats.invested <= 25) {
+  if (stats.savingsDollars >= 7500 && stats.investedDollars <= 2500) {
     return {
       title: "Careful Observer",
       body: "You protected yourself well, but you still have room to build conviction and act with more clarity.",
@@ -385,10 +385,18 @@ function getEnding(stats: Stats) {
 }
 
 function getMood(stats: Stats) {
-  if (stats.risk >= 70) return "is getting reckless";
+  if (stats.stress >= 70) return "is feeling overwhelmed";
   if (stats.confidence <= 35) return "is feeling shaken";
   if (stats.confidence >= 70) return "looks more confident";
   return "is figuring it out";
+}
+
+function formatMoney(value: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(value);
 }
 
 function getSimJob(characterId?: string) {
@@ -415,11 +423,11 @@ export default function SimulationOneScreen() {
   const [stepIndex, setStepIndex] = useState(0);
   const [brand, setBrand] = useState(params.brand ?? "");
   const [stats, setStats] = useState<Stats>({
-    income: 48,
-    invested: 20,
-    cash: 62,
+    annualIncome: 48000,
+    investedDollars: 2000,
+    savingsDollars: 6200,
     confidence: 44,
-    risk: 34,
+    stress: 34,
   });
   const [selectedChoiceId, setSelectedChoiceId] = useState<string | null>(null);
   const [result, setResult] = useState<Choice | null>(null);
@@ -535,14 +543,15 @@ export default function SimulationOneScreen() {
 
         <View style={styles.statsRow}>
           {[
-            { label: "Income", value: stats.income },
-            { label: "Invested", value: stats.invested },
-            { label: "Cash", value: stats.cash },
-            { label: "Risk", value: stats.risk },
+            { label: "Income", value: formatMoney(stats.annualIncome), helper: "annual pay" },
+            { label: "Invested", value: formatMoney(stats.investedDollars), helper: "currently in the market" },
+            { label: "Savings", value: formatMoney(stats.savingsDollars), helper: "still in cash" },
+            { label: "Stress", value: `${stats.stress}/100`, helper: "how shaky you feel" },
           ].map((stat) => (
             <View key={stat.label} style={styles.statChip}>
               <Text style={styles.statChipLabel}>{stat.label}</Text>
               <Text style={styles.statChipValue}>{stat.value}</Text>
+              <Text style={styles.statChipHelper}>{stat.helper}</Text>
             </View>
           ))}
         </View>
@@ -790,6 +799,12 @@ const styles = StyleSheet.create({
     color: WHITE,
     fontSize: 24,
     fontWeight: "900",
+    marginTop: 6,
+  },
+  statChipHelper: {
+    color: MUTED,
+    fontSize: 11,
+    lineHeight: 15,
     marginTop: 6,
   },
   timeHeader: {
