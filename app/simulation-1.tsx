@@ -456,6 +456,67 @@ function getMarketTone(value: string) {
   };
 }
 
+function getSceneTone(step: SimulationStep) {
+  const map: Record<string, { accent: string; soft: string; border: string; label: string }> = {
+    "week-1": {
+      accent: "#7ED6A5",
+      soft: "rgba(126,214,165,0.12)",
+      border: "rgba(126,214,165,0.28)",
+      label: "Calm start",
+    },
+    "month-1": {
+      accent: "#60A5FA",
+      soft: "rgba(96,165,250,0.12)",
+      border: "rgba(96,165,250,0.28)",
+      label: "Momentum",
+    },
+    "month-2": {
+      accent: "#34D399",
+      soft: "rgba(52,211,153,0.12)",
+      border: "rgba(52,211,153,0.28)",
+      label: "Strong report",
+    },
+    "month-3": {
+      accent: "#FB7185",
+      soft: "rgba(251,113,133,0.12)",
+      border: "rgba(251,113,133,0.28)",
+      label: "Profit pressure",
+    },
+    "month-4": {
+      accent: "#F59E0B",
+      soft: "rgba(245,158,11,0.12)",
+      border: "rgba(245,158,11,0.28)",
+      label: "Hype cycle",
+    },
+    "month-6": {
+      accent: "#F87171",
+      soft: "rgba(248,113,113,0.12)",
+      border: "rgba(248,113,113,0.28)",
+      label: "Market shock",
+    },
+    "month-8": {
+      accent: "#A78BFA",
+      soft: "rgba(167,139,250,0.12)",
+      border: "rgba(167,139,250,0.28)",
+      label: "Valuation check",
+    },
+    "month-10": {
+      accent: "#22C55E",
+      soft: "rgba(34,197,94,0.12)",
+      border: "rgba(34,197,94,0.28)",
+      label: "Process level-up",
+    },
+    "year-1": {
+      accent: "#FACC15",
+      soft: "rgba(250,204,21,0.12)",
+      border: "rgba(250,204,21,0.28)",
+      label: "Final stretch",
+    },
+  };
+
+  return map[step.id] ?? map["week-1"];
+}
+
 function getBrandSymbol(brand: string) {
   const normalized = brand.toLowerCase();
 
@@ -583,6 +644,7 @@ export default function SimulationOneScreen() {
   const resolvedBrand = brand || "your chosen fast food brand";
   const simJob = useMemo(() => getSimJob(), []);
   const marketTone = getMarketTone(step.marketValue);
+  const sceneTone = getSceneTone(step);
   const quote = getQuoteSnapshot(step, resolvedBrand);
   const watchlist = getWatchlist(step, resolvedBrand);
 
@@ -769,16 +831,36 @@ export default function SimulationOneScreen() {
             </View>
 
             <View style={styles.scenarioSection}>
-              <View style={styles.eventCard}>
+              <View
+                style={[
+                  styles.eventCard,
+                  {
+                    borderColor: sceneTone.border,
+                    backgroundColor: "#0B1320",
+                  },
+                ]}
+              >
+                <View style={[styles.eventBanner, { backgroundColor: sceneTone.soft, borderColor: sceneTone.border }]}>
+                  <Text style={[styles.eventBannerText, { color: sceneTone.accent }]}>{sceneTone.label}</Text>
+                  <Text style={styles.eventBannerTime}>{step.timeLabel}</Text>
+                </View>
                 <Text style={styles.eventTitle}>{step.title}</Text>
                 <Text style={styles.eventBody}>{step.body(resolvedBrand, simJob)}</Text>
               </View>
 
-              <View style={styles.choicePanel}>
+              <View
+                style={[
+                  styles.choicePanel,
+                  {
+                    borderColor: sceneTone.border,
+                    backgroundColor: "#101827",
+                  },
+                ]}
+              >
                 <Text style={styles.choicePanelTitle}>What do you want to do?</Text>
 
                 {result ? (
-                  <View style={styles.resultCard}>
+                  <View style={[styles.resultCard, { borderColor: sceneTone.border, backgroundColor: sceneTone.soft }]}>
                     <Text style={styles.resultTitle}>{selectedCharacter?.emoji ?? "✨"} {result.reaction}</Text>
                     <Text style={styles.resultText}>{result.explanation}</Text>
                   </View>
@@ -787,23 +869,49 @@ export default function SimulationOneScreen() {
                     {step.choices.map((choice) => {
                       const selected = selectedChoiceId === choice.id;
                       const badges = getEffectBadges(choice.effects);
+                      const actionLabel = choice.id === step.choices[0].id ? "A" : choice.id === step.choices[1].id ? "B" : "C";
                       return (
                         <TouchableOpacity
                           key={choice.id}
                           onPress={() => setSelectedChoiceId(choice.id)}
-                          style={[styles.choiceButton, selected && styles.choiceButtonSelected]}
+                          style={[
+                            styles.choiceButton,
+                            selected && styles.choiceButtonSelected,
+                            selected && {
+                              borderColor: sceneTone.border,
+                              backgroundColor: sceneTone.soft,
+                            },
+                          ]}
                         >
-                          <Text style={[styles.choiceButtonText, selected && styles.choiceButtonTextSelected]}>
-                            {choice.label}
-                          </Text>
-                          <View style={styles.choiceBadgeRow}>
-                            {badges.map((badge) => (
-                              <View key={badge} style={styles.choiceBadge}>
-                                <Text style={styles.choiceBadgeText}>{badge}</Text>
-                              </View>
-                            ))}
+                          <View style={styles.choiceHeader}>
+                            <View
+                              style={[
+                                styles.choiceActionTag,
+                                selected && { backgroundColor: sceneTone.accent, borderColor: sceneTone.accent },
+                              ]}
+                            >
+                              <Text style={[styles.choiceActionTagText, selected && styles.choiceActionTagTextSelected]}>
+                                {actionLabel}
+                              </Text>
+                            </View>
+                            <Text style={[styles.choiceButtonText, selected && styles.choiceButtonTextSelected]}>
+                              {choice.label}
+                            </Text>
                           </View>
-                        </TouchableOpacity>
+                          <View style={styles.choiceBadgeRow}>
+                              {badges.map((badge) => (
+                                <View
+                                  key={badge}
+                                  style={[
+                                    styles.choiceBadge,
+                                    selected && { backgroundColor: "rgba(255,255,255,0.12)" },
+                                  ]}
+                                >
+                                  <Text style={[styles.choiceBadgeText, selected && styles.choiceBadgeTextSelected]}>{badge}</Text>
+                                </View>
+                              ))}
+                            </View>
+                          </TouchableOpacity>
                       );
                     })}
                   </View>
@@ -1214,11 +1322,30 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   eventCard: {
-    borderRadius: 22,
-    backgroundColor: "#0D1728",
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: BORDER,
     padding: 16,
+  },
+  eventBanner: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    marginBottom: 14,
+  },
+  eventBannerText: {
+    fontSize: 11,
+    fontWeight: "900",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+  },
+  eventBannerTime: {
+    color: WHITE,
+    fontSize: 11,
+    fontWeight: "800",
   },
   eventTitle: {
     color: WHITE,
@@ -1255,10 +1382,8 @@ const styles = StyleSheet.create({
   },
   choicePanel: {
     marginTop: 18,
-    borderRadius: 24,
-    backgroundColor: "#0E1A2E",
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: BORDER,
     padding: 14,
   },
   choicePanelTitle: {
@@ -1271,21 +1396,45 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   choiceButton: {
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: BORDER,
-    backgroundColor: "rgba(255,255,255,0.03)",
+    backgroundColor: "#131D2D",
     padding: 14,
   },
   choiceButtonSelected: {
-    borderColor: "rgba(126,214,165,0.7)",
-    backgroundColor: "rgba(126,214,165,0.14)",
+    transform: [{ translateY: -1 }],
+  },
+  choiceHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+  },
+  choiceActionTag: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.14)",
+    backgroundColor: "rgba(255,255,255,0.06)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 1,
+  },
+  choiceActionTagText: {
+    color: WHITE,
+    fontSize: 12,
+    fontWeight: "900",
+  },
+  choiceActionTagTextSelected: {
+    color: NAVY,
   },
   choiceButtonText: {
     color: WHITE,
     fontSize: 14,
     fontWeight: "800",
     lineHeight: 20,
+    flex: 1,
   },
   choiceButtonTextSelected: {
     color: WHITE,
@@ -1306,6 +1455,9 @@ const styles = StyleSheet.create({
     color: MUTED,
     fontSize: 11,
     fontWeight: "900",
+  },
+  choiceBadgeTextSelected: {
+    color: WHITE,
   },
   resultCard: {
     borderRadius: 18,
