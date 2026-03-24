@@ -544,46 +544,56 @@ export default function SimulationOneScreen() {
 
         {!isFinished ? (
           <>
-            <View style={styles.timeHeader}>
-              <Text style={styles.timeLabel}>{step.timeLabel}</Text>
-              <Text style={styles.timeDivider}>•</Text>
-              <Text style={styles.timeMarket}>{step.marketLabel}</Text>
-            </View>
+            <View style={styles.timelineSection}>
+              <View style={styles.timelineRail}>
+                <View style={styles.timelineDot} />
+                <View style={styles.timelineLine} />
+              </View>
 
-            <Text style={styles.eventTitle}>{step.title}</Text>
-            <Text style={styles.eventBody}>{step.body(resolvedBrand, simJob)}</Text>
-
-            <View style={styles.newsCard}>
-              <Text style={styles.newsKicker}>{step.marketValue}</Text>
-              <Text style={styles.newsText}>{step.update(resolvedBrand)}</Text>
-            </View>
-
-            <View style={styles.choicePanel}>
-              <Text style={styles.choicePanelTitle}>What do you want to do?</Text>
-
-              {result ? (
-                <View style={styles.resultCard}>
-                  <Text style={styles.resultTitle}>{selectedCharacter?.emoji ?? "✨"} {result.reaction}</Text>
-                  <Text style={styles.resultText}>{result.explanation}</Text>
+              <View style={styles.timelineContent}>
+                <View style={styles.timeChipRow}>
+                  <Text style={styles.timeChip}>{step.timeLabel}</Text>
+                  <Text style={styles.timeMeta}>{step.marketLabel}</Text>
                 </View>
-              ) : (
-                <View style={styles.choices}>
-                  {step.choices.map((choice) => {
-                    const selected = selectedChoiceId === choice.id;
-                    return (
-                      <TouchableOpacity
-                        key={choice.id}
-                        onPress={() => setSelectedChoiceId(choice.id)}
-                        style={[styles.choiceButton, selected && styles.choiceButtonSelected]}
-                      >
-                        <Text style={[styles.choiceButtonText, selected && styles.choiceButtonTextSelected]}>
-                          {choice.label}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
+
+                <View style={styles.eventCard}>
+                  <Text style={styles.eventTitle}>{step.title}</Text>
+                  <Text style={styles.eventBody}>{step.body(resolvedBrand, simJob)}</Text>
                 </View>
-              )}
+
+                <View style={styles.newsCard}>
+                  <Text style={styles.newsKicker}>{step.marketValue}</Text>
+                  <Text style={styles.newsText}>{step.update(resolvedBrand)}</Text>
+                </View>
+
+                <View style={styles.choicePanel}>
+                  <Text style={styles.choicePanelTitle}>What do you want to do?</Text>
+
+                  {result ? (
+                    <View style={styles.resultCard}>
+                      <Text style={styles.resultTitle}>{selectedCharacter?.emoji ?? "✨"} {result.reaction}</Text>
+                      <Text style={styles.resultText}>{result.explanation}</Text>
+                    </View>
+                  ) : (
+                    <View style={styles.choices}>
+                      {step.choices.map((choice) => {
+                        const selected = selectedChoiceId === choice.id;
+                        return (
+                          <TouchableOpacity
+                            key={choice.id}
+                            onPress={() => setSelectedChoiceId(choice.id)}
+                            style={[styles.choiceButton, selected && styles.choiceButtonSelected]}
+                          >
+                            <Text style={[styles.choiceButtonText, selected && styles.choiceButtonTextSelected]}>
+                              {choice.label}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  )}
+                </View>
+              </View>
             </View>
           </>
         ) : (
@@ -793,26 +803,60 @@ const styles = StyleSheet.create({
     lineHeight: 15,
     marginTop: 6,
   },
-  timeHeader: {
+  timelineSection: {
+    flexDirection: "row",
+    gap: 14,
+  },
+  timelineRail: {
+    width: 22,
+    alignItems: "center",
+  },
+  timelineDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 999,
+    backgroundColor: GREEN,
+    marginTop: 6,
+  },
+  timelineLine: {
+    width: 2,
+    flex: 1,
+    backgroundColor: "rgba(255,255,255,0.12)",
+    marginTop: 8,
+  },
+  timelineContent: {
+    flex: 1,
+  },
+  timeChipRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 10,
     marginBottom: 10,
   },
-  timeLabel: {
+  timeChip: {
     color: GREEN,
     fontSize: 13,
     fontWeight: "900",
     textTransform: "uppercase",
     letterSpacing: 0.8,
+    borderWidth: 1,
+    borderColor: "rgba(126,214,165,0.28)",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    overflow: "hidden",
   },
-  timeDivider: {
-    color: "rgba(255,255,255,0.3)",
-  },
-  timeMarket: {
+  timeMeta: {
     color: MUTED,
     fontSize: 13,
     fontWeight: "700",
+  },
+  eventCard: {
+    borderRadius: 22,
+    backgroundColor: "#0D1728",
+    borderWidth: 1,
+    borderColor: BORDER,
+    padding: 16,
   },
   eventTitle: {
     color: WHITE,
@@ -851,7 +895,7 @@ const styles = StyleSheet.create({
   choicePanel: {
     marginTop: 18,
     borderRadius: 24,
-    backgroundColor: PANEL,
+    backgroundColor: "#0E1A2E",
     borderWidth: 1,
     borderColor: BORDER,
     padding: 14,
