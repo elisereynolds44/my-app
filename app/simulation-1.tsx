@@ -399,22 +399,8 @@ function formatMoney(value: number) {
   }).format(value);
 }
 
-function getSimJob(characterId?: string) {
-  const jobs = [
-    "campus barista",
-    "retail shift lead",
-    "front desk assistant",
-    "student content intern",
-    "weekend server",
-    "campus rec attendant",
-  ];
-
-  if (!characterId) {
-    return jobs[0];
-  }
-
-  const seed = characterId.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
-  return jobs[seed % jobs.length];
+function getSimJob() {
+  return "entry-level software engineer";
 }
 
 export default function SimulationOneScreen() {
@@ -423,9 +409,9 @@ export default function SimulationOneScreen() {
   const [stepIndex, setStepIndex] = useState(0);
   const [brand, setBrand] = useState(params.brand ?? "");
   const [stats, setStats] = useState<Stats>({
-    annualIncome: 48000,
-    investedDollars: 2000,
-    savingsDollars: 6200,
+    annualIncome: 105000,
+    investedDollars: 4000,
+    savingsDollars: 14000,
     confidence: 44,
     stress: 34,
   });
@@ -459,7 +445,7 @@ export default function SimulationOneScreen() {
   const mood = result?.reaction ?? getMood(stats);
   const progressPct = Math.round((Math.min(stepIndex + 1, STEPS.length) / STEPS.length) * 100);
   const resolvedBrand = brand || "your chosen fast food brand";
-  const simJob = useMemo(() => getSimJob(profile?.characterId), [profile?.characterId]);
+  const simJob = useMemo(() => getSimJob(), []);
 
   const handleChoice = () => {
     if (!selectedChoiceId) {
