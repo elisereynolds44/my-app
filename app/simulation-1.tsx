@@ -382,74 +382,6 @@ function getStepMovePct(stepId: string) {
   return moves[stepId] ?? 0;
 }
 
-function getDecisionPrompt(step: SimulationStep, brand: string, job: string) {
-  const prompts: Record<string, string> = {
-    "week-1": `You know ${brand}, you trust the story, and your ${job} paycheck is finally giving you room to start.`,
-    "month-1": `${brand} is up a little and you just got paid. Momentum feels tempting.`,
-    "month-2": `${brand} posted strong revenue and the market is getting excited fast.`,
-    "month-3": `${brand} still has demand, but weaker profit is making investors nervous.`,
-    "month-4": `${brand} is suddenly everywhere online and the hype is getting loud.`,
-    "month-6": `Fast food stocks are selling off hard. The big question is whether this is your company or the whole market.`,
-    "month-8": `${brand} still looks strong, but the stock is starting to look expensive.`,
-    "month-10": `You have enough experience now to choose process over impulse.`,
-    "year-1": `The market gave you a full year of noise. Now your habits matter more than one headline.`,
-  };
-
-  return prompts[step.id] ?? step.body(brand, job);
-}
-
-function getStepClues(step: SimulationStep, brand: string) {
-  const clues: Record<string, { label: string; value: string }[]> = {
-    "week-1": [
-      { label: "Setup", value: `First buy in ${brand}` },
-      { label: "Risk", value: "Low pressure" },
-      { label: "Signal", value: "Nothing urgent yet" },
-    ],
-    "month-1": [
-      { label: "Move", value: "+4.2% this month" },
-      { label: "Emotion", value: "FOMO building" },
-      { label: "Question", value: "Add or stay calm?" },
-    ],
-    "month-2": [
-      { label: "Headline", value: "Revenue beat" },
-      { label: "Crowd", value: "Optimism rising" },
-      { label: "Question", value: "Story or substance?" },
-    ],
-    "month-3": [
-      { label: "Headline", value: "Profit missed" },
-      { label: "Pressure", value: "Costs up" },
-      { label: "Question", value: "Panic or analyze?" },
-    ],
-    "month-4": [
-      { label: "Headline", value: "Social hype" },
-      { label: "Risk", value: "Expectations stretched" },
-      { label: "Question", value: "Join or zoom out?" },
-    ],
-    "month-6": [
-      { label: "Headline", value: "Sector sell-off" },
-      { label: "Indexes", value: "Check the board" },
-      { label: "Question", value: "Fear or context?" },
-    ],
-    "month-8": [
-      { label: "Business", value: "Still solid" },
-      { label: "Valuation", value: "Looks rich" },
-      { label: "Question", value: "Great stock or pricey stock?" },
-    ],
-    "month-10": [
-      { label: "Mindset", value: "Checklist time" },
-      { label: "Upgrade", value: "Less vibes, more process" },
-      { label: "Question", value: "Can you stay consistent?" },
-    ],
-    "year-1": [
-      { label: "Time", value: "1 year later" },
-      { label: "Lesson", value: "Noise never left" },
-      { label: "Question", value: "Who did you become?" },
-    ],
-  };
-
-  return clues[step.id] ?? [{ label: "Signal", value: step.update(brand) }];
-}
-
 function getEnding(stats: Stats) {
   if (stats.confidence >= 65 && stats.stress <= 40) {
     return {
@@ -517,40 +449,6 @@ function getEffectBadges(effects: Partial<Stats>) {
   }
 
   return badges.slice(0, 3);
-}
-
-function getChoiceCopy(choiceId: string) {
-  const labels: Record<string, { title: string; sublabel: string }> = {
-    "small-start": { title: "Start small", sublabel: "low pressure" },
-    "all-in": { title: "Go big", sublabel: "high conviction" },
-    "wait": { title: "Wait", sublabel: "watch first" },
-    "add-small": { title: "Add more", sublabel: "steady build" },
-    "hold": { title: "Hold", sublabel: "stay calm" },
-    "chase": { title: "Chase", sublabel: "fear of missing out" },
-    "check-business": { title: "Check the business", sublabel: "read the numbers" },
-    "celebrate": { title: "Buy the hype", sublabel: "headline first" },
-    "ignore-revenue": { title: "Ignore it", sublabel: "watch price only" },
-    "compare-metrics": { title: "Compare metrics", sublabel: "revenue vs profit" },
-    "panic-sell": { title: "Panic sell", sublabel: "cut risk fast" },
-    "average-down-fast": { title: "Buy the dip", sublabel: "move fast" },
-    "zoom-out": { title: "Zoom out", sublabel: "ignore the noise" },
-    "join-hype": { title: "Join hype", sublabel: "ride momentum" },
-    "sell-noise": { title: "Exit", sublabel: "too chaotic" },
-    "check-indexes-first": { title: "Check indexes", sublabel: "market or stock?" },
-    "sell-on-fear": { title: "Sell on fear", sublabel: "get out now" },
-    "buy-with-thesis": { title: "Buy with thesis", sublabel: "conviction only" },
-    "separate-ideas": { title: "Separate price/value", sublabel: "think clearly" },
-    "ignore-price": { title: "Ignore price", sublabel: "great company = buy?" },
-    "give-up": { title: "Step away", sublabel: "too complicated" },
-    "use-checklist": { title: "Use checklist", sublabel: "process first" },
-    "keep-vibes": { title: "Go with vibes", sublabel: "fast instinct" },
-    "copy-online": { title: "Copy others", sublabel: "borrow conviction" },
-    "patient": { title: "Stay patient", sublabel: "long-term focus" },
-    "flip": { title: "Keep flipping", sublabel: "react to moves" },
-    "step-back": { title: "Regroup", sublabel: "pause and reset" },
-  };
-
-  return labels[choiceId] ?? { title: "Make a move", sublabel: "choose carefully" };
 }
 
 function getSimJob() {
@@ -782,8 +680,6 @@ export default function SimulationOneScreen() {
   const quote = getQuoteSnapshot(step, resolvedBrand);
   const watchlist = getWatchlist(step, resolvedBrand);
   const totalPnl = stats.portfolioValueDollars - stats.amountInvestedDollars;
-  const decisionPrompt = getDecisionPrompt(step, resolvedBrand, simJob);
-  const stepClues = getStepClues(step, resolvedBrand);
 
   const handleChoice = () => {
     if (!selectedChoiceId) {
@@ -1009,15 +905,7 @@ export default function SimulationOneScreen() {
                   <Text style={styles.eventBannerTime}>{step.timeLabel}</Text>
                 </View>
                 <Text style={styles.eventTitle}>{step.title}</Text>
-                <Text style={styles.eventPrompt}>{decisionPrompt}</Text>
-                <View style={styles.clueRow}>
-                  {stepClues.map((clue) => (
-                    <View key={`${step.id}-${clue.label}`} style={styles.clueCard}>
-                      <Text style={styles.clueLabel}>{clue.label}</Text>
-                      <Text style={styles.clueValue}>{clue.value}</Text>
-                    </View>
-                  ))}
-                </View>
+                <Text style={styles.eventBody}>{step.body(resolvedBrand, simJob)}</Text>
               </View>
 
               <View
@@ -1045,7 +933,6 @@ export default function SimulationOneScreen() {
                     {step.choices.map((choice) => {
                       const selected = selectedChoiceId === choice.id;
                       const badges = getEffectBadges(choice.effects);
-                      const copy = getChoiceCopy(choice.id);
                       const actionLabel = choice.id === step.choices[0].id ? "A" : choice.id === step.choices[1].id ? "B" : "C";
                       return (
                         <TouchableOpacity
@@ -1071,14 +958,9 @@ export default function SimulationOneScreen() {
                                 {actionLabel}
                               </Text>
                             </View>
-                            <View style={styles.choiceTextWrap}>
-                              <Text style={[styles.choiceButtonText, selected && styles.choiceButtonTextSelected]}>
-                                {copy.title}
-                              </Text>
-                              <Text style={[styles.choiceSubtext, selected && styles.choiceSubtextSelected]}>
-                                {copy.sublabel}
-                              </Text>
-                            </View>
+                            <Text style={[styles.choiceButtonText, selected && styles.choiceButtonTextSelected]}>
+                              {choice.label}
+                            </Text>
                           </View>
                           <View style={styles.choiceBadgeRow}>
                               {badges.map((badge) => (
@@ -1507,7 +1389,7 @@ const styles = StyleSheet.create({
   quoteStatsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 6,
+    gap: 8,
   },
   quoteStatCard: {
     width: "48%",
@@ -1567,42 +1449,6 @@ const styles = StyleSheet.create({
     lineHeight: 31,
     marginBottom: 8,
   },
-  eventPrompt: {
-    color: WHITE,
-    fontSize: 15,
-    lineHeight: 22,
-    fontWeight: "700",
-  },
-  clueRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginTop: 14,
-  },
-  clueCard: {
-    minWidth: "31%",
-    flex: 1,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
-    backgroundColor: "rgba(255,255,255,0.04)",
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-  },
-  clueLabel: {
-    color: MUTED,
-    fontSize: 10,
-    fontWeight: "900",
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-    marginBottom: 5,
-  },
-  clueValue: {
-    color: WHITE,
-    fontSize: 13,
-    fontWeight: "800",
-    lineHeight: 17,
-  },
   eventBody: {
     color: MUTED,
     fontSize: 15,
@@ -1637,11 +1483,9 @@ const styles = StyleSheet.create({
   },
   choicePanelTitle: {
     color: WHITE,
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "900",
     marginBottom: 12,
-    textTransform: "uppercase",
-    letterSpacing: 0.7,
   },
   choices: {
     gap: 10,
@@ -1660,10 +1504,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 10,
-  },
-  choiceTextWrap: {
-    flex: 1,
-    gap: 3,
   },
   choiceActionTag: {
     width: 28,
@@ -1686,19 +1526,12 @@ const styles = StyleSheet.create({
   },
   choiceButtonText: {
     color: WHITE,
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "800",
-    lineHeight: 18,
+    lineHeight: 20,
+    flex: 1,
   },
   choiceButtonTextSelected: {
-    color: WHITE,
-  },
-  choiceSubtext: {
-    color: MUTED,
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  choiceSubtextSelected: {
     color: WHITE,
   },
   choiceBadgeRow: {
