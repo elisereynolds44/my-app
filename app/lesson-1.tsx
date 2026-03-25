@@ -214,6 +214,50 @@ export default function LessonOneScreen() {
         ],
       },
       {
+        kind: "terms",
+        kicker: "MONEY TRACKER",
+        title: "Why invested money and portfolio value can be different.",
+        intro:
+          "In the simulation, one number tracks how much money you put in, and another tracks what that money is worth now. Those are not always the same thing.",
+        items: [
+          {
+            label: "Cash",
+            meaning: "Money you still have available and have not invested yet.",
+            whyItMatters: "If you buy more, cash usually goes down.",
+          },
+          {
+            label: "Amount invested",
+            meaning: "How much money you have actually put into the market.",
+            whyItMatters: "This changes when you buy more or sell some.",
+          },
+          {
+            label: "Portfolio value",
+            meaning: "What your investments are worth right now after the market moves.",
+            whyItMatters: "This can rise or fall even if you do not buy or sell anything.",
+          },
+          {
+            label: "Why the number jumped",
+            meaning: "If you add money and then the stock goes up that same round, your portfolio value increases for both reasons.",
+            whyItMatters: "The simulation updates both your contribution and the market move.",
+          },
+        ],
+      },
+      {
+        kind: "question",
+        kicker: "QUIZ",
+        title: "Amount invested versus portfolio value",
+        prompt: "If you invest more money and then the stock rises, what should happen next?",
+        options: [
+          { key: "A", text: "Only the amount invested changes." },
+          { key: "B", text: "Only the portfolio value changes." },
+          { key: "C", text: "The amount invested changes, and the portfolio value can change too." },
+        ],
+        correct: "C",
+        correctMsg: "Correct. Putting in more money changes the amount invested, and market movement can change the portfolio value too.",
+        wrongMsg:
+          "Not quite. The amount invested tracks what you put in, while portfolio value also reacts to what the market does after that.",
+      },
+      {
         kind: "indices",
         kicker: "MARKET CONTEXT",
         title: "Why people watch the big three indexes.",
