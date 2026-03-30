@@ -93,7 +93,8 @@ export async function loadStoredProfile() {
     }
 
     return remoteProfile ?? localProfile;
-  } catch {
+  } catch (error) {
+    console.warn("Could not load Firebase profile.", error);
     return localProfile;
   }
 }
@@ -109,7 +110,7 @@ export async function saveStoredProfile(profile: ProfileData) {
 
   try {
     await setDoc(doc(database, "profiles", getProfileKey(profile.email)), profile, { merge: true });
-  } catch {
-    // Keep local persistence working even if remote sync fails.
+  } catch (error) {
+    console.warn("Could not save Firebase profile.", error);
   }
 }

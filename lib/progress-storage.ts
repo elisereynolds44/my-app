@@ -6,6 +6,34 @@ import { getStoredProfileOwnerKey } from "@/lib/profile-storage";
 
 export type ProgressSnapshot = Record<string, string>;
 
+function canUseLocalStorage() {
+  return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+}
+
+function getLocalProgressValue(key: string) {
+  if (!canUseLocalStorage()) {
+    return null;
+  }
+
+  return window.localStorage.getItem(key);
+}
+
+function setLocalProgressValue(key: string, value: string) {
+  if (!canUseLocalStorage()) {
+    return;
+  }
+
+  window.localStorage.setItem(key, value);
+}
+
+function removeLocalProgressValue(key: string) {
+  if (!canUseLocalStorage()) {
+    return;
+  }
+
+  window.localStorage.removeItem(key);
+}
+
 async function loadRemoteProgress() {
   const database = getFirebaseFirestore();
   const ownerKey = await getStoredProfileOwnerKey();
@@ -21,7 +49,8 @@ async function loadRemoteProgress() {
     }
 
     return (snapshot.data() as ProgressSnapshot | undefined) ?? {};
-  } catch {
+  } catch (error) {
+    console.warn("Could not load Firebase progress.", error);
     return {};
   }
 }
@@ -36,12 +65,17 @@ async function saveRemoteProgress(values: ProgressSnapshot) {
 
   try {
     await setDoc(doc(database, "progress", ownerKey), values, { merge: true });
-  } catch {
-    // Keep local progress working even if remote sync fails.
+  } catch (error) {
+    console.warn("Could not save Firebase progress.", error);
   }
 }
 
 export async function getProgressValue(key: string) {
+  const browserValue = getLocalProgressValue(key);
+  if (browserValue !== null) {
+    return browserValue;
+  }
+
   const localValue = await AsyncStorage.getItem(key);
   if (localValue !== null) {
     return localValue;
@@ -52,17 +86,21 @@ export async function getProgressValue(key: string) {
 }
 
 export async function setProgressValue(key: string, value: string) {
+  setLocalProgressValue(key, value);
   await AsyncStorage.setItem(key, value);
   await saveRemoteProgress({ [key]: value });
 }
 
 export async function removeProgressValue(key: string) {
+  removeLocalProgressValue(key);
   await AsyncStorage.removeItem(key);
   await saveRemoteProgress({ [key]: "" });
 }
 
 export async function getProgressValues(keys: string[]) {
-  const localEntries = await Promise.all(keys.map(async (key) => [key, await AsyncStorage.getItem(key)] as const));
+  const localEntries = await Promise.all(
+    keys.map(async (key) => [key, getLocalProgressValue(key) ?? (await AsyncStorage.getItem(key))] as const)
+  );
   const missingKeys = localEntries.filter(([, value]) => value === null).map(([key]) => key);
 
   if (missingKeys.length === 0) {
