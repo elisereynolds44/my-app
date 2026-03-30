@@ -23,55 +23,55 @@ const MODULES = [
   },
   {
     id: "lesson-2",
-    route: null,
+    route: "/lesson-2",
     title: "Module 2: Markets & movements",
     description: "Why prices change, and why it’s not random.",
   },
   {
     id: "lesson-3",
-    route: null,
+    route: "/lesson-3",
     title: "Module 3: Risk & reality",
     description: "How things go wrong, and how people manage that.",
   },
   {
     id: "lesson-4",
-    route: null,
+    route: "/lesson-4",
     title: "Module 4: Your first strategy",
     description: "Making choices that actually fit you.",
   },
   {
     id: "lesson-5",
-    route: null,
+    route: "/lesson-5",
     title: "Module 5: ETFs & diversification",
     description: "The simplest way to not bet everything on one stock.",
   },
   {
     id: "lesson-6",
-    route: null,
+    route: "/lesson-6",
     title: "Module 6: Time horizon",
     description: "When you need the money changes everything.",
   },
   {
     id: "lesson-7",
-    route: null,
+    route: "/lesson-7",
     title: "Module 7: Tax basics",
     description: "The stuff nobody explains until it hurts.",
   },
   {
     id: "lesson-8",
-    route: null,
+    route: "/lesson-8",
     title: "Module 8: Roth IRA & 401(k)",
     description: "Future-you accounts and how they work.",
   },
   {
     id: "lesson-9",
-    route: null,
+    route: "/lesson-9",
     title: "Module 9: Starter portfolio",
     description: "A simple structure you can understand and explain.",
   },
   {
     id: "lesson-10",
-    route: null,
+    route: "/lesson-10",
     title: "Module 10: Staying consistent",
     description: "Habits that beat hype, even when markets are weird.",
   },
@@ -80,6 +80,7 @@ const MODULES = [
 export default function RoadmapScreen() {
   const [completedLesson1, setCompletedLesson1] = useState(false);
   const [completedSimulation1, setCompletedSimulation1] = useState(false);
+  const [completedLessons, setCompletedLessons] = useState<Record<number, boolean>>({});
   const [lastBrand, setLastBrand] = useState<string | null>(null);
 
   // Refresh when returning to this screen
@@ -87,14 +88,25 @@ export default function RoadmapScreen() {
     useCallback(() => {
       const load = async () => {
         try {
-          const [lessonDone, simulationDone, storedBrand] = await Promise.all([
+          const lessonKeys = Array.from({ length: 9 }, (_, index) =>
+            AsyncStorage.getItem(`completedLesson${index + 2}`)
+          );
+
+          const [lessonDone, simulationDone, storedBrand, ...otherLessons] = await Promise.all([
             AsyncStorage.getItem("completedLesson1"),
             AsyncStorage.getItem("completedSimulation1"),
             AsyncStorage.getItem("lesson1LastBrand"),
+            ...lessonKeys,
           ]);
           setCompletedLesson1(lessonDone === "true");
           setCompletedSimulation1(simulationDone === "true");
           setLastBrand(storedBrand);
+          setCompletedLessons(
+            otherLessons.reduce<Record<number, boolean>>((acc, value, index) => {
+              acc[index + 2] = value === "true";
+              return acc;
+            }, {})
+          );
         } catch (e) {
           console.log("Error loading completedLesson1", e);
         }
@@ -104,10 +116,23 @@ export default function RoadmapScreen() {
     }, [])
   );
 
-  // Unlock Module 2 when Lesson 1 complete
   const unlockedIndex = useMemo(() => {
-    return completedSimulation1 ? 1 : 0;
-  }, [completedSimulation1]);
+    if (!completedSimulation1) {
+      return 0;
+    }
+
+    let unlocked = 1;
+
+    for (let lessonNumber = 2; lessonNumber <= 9; lessonNumber += 1) {
+      if (completedLessons[lessonNumber]) {
+        unlocked += 1;
+      } else {
+        break;
+      }
+    }
+
+    return unlocked;
+  }, [completedLessons, completedSimulation1]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -120,15 +145,17 @@ export default function RoadmapScreen() {
         {MODULES.map((module, i) => {
           const isReady = i <= unlockedIndex && Boolean(module.route);
           const isModuleOne = module.id === "lesson-1";
+          const lessonNumber = Number(module.id.replace("lesson-", ""));
           const isCompleted = isModuleOne && completedSimulation1;
           const isLessonDone = isModuleOne && completedLesson1;
+          const isStandardLessonCompleted = !isModuleOne && completedLessons[lessonNumber];
           const actionLabel = isModuleOne
             ? isCompleted
               ? "Review lesson"
               : isLessonDone
                 ? "Review lesson"
                 : "Start lesson 1"
-            : isCompleted
+            : isStandardLessonCompleted
               ? "Review module"
               : "Start module";
 
@@ -137,7 +164,7 @@ export default function RoadmapScreen() {
               <View style={styles.cardHeader}>
                 <Text style={styles.cardTitle}>{module.title}</Text>
 
-                {isCompleted ? (
+                {isCompleted || isStandardLessonCompleted ? (
                   <Text style={[styles.badge, styles.badgeComplete]}>
                     Completed
                   </Text>
@@ -168,6 +195,10 @@ export default function RoadmapScreen() {
               ) : isModuleOne && isCompleted ? (
                 <Text style={styles.helperText}>
                   Module 1 is complete. You can revisit the lesson or replay the simulation.
+                </Text>
+              ) : !isModuleOne && isStandardLessonCompleted ? (
+                <Text style={styles.helperText}>
+                  Lesson complete. You can review it anytime.
                 </Text>
               ) : null}
 

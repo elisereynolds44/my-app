@@ -10,6 +10,15 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(onboarding)/welcome" />
         <Stack.Screen name="lesson-1" />
+        <Stack.Screen name="lesson-2" />
+        <Stack.Screen name="lesson-3" />
+        <Stack.Screen name="lesson-4" />
+        <Stack.Screen name="lesson-5" />
+        <Stack.Screen name="lesson-6" />
+        <Stack.Screen name="lesson-7" />
+        <Stack.Screen name="lesson-8" />
+        <Stack.Screen name="lesson-9" />
+        <Stack.Screen name="lesson-10" />
         <Stack.Screen name="simulation-1" />
         <Stack.Screen name="modal" options={{ presentation: "modal" }} />
       </Stack>
