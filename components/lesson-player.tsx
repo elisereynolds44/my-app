@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { LESSON_LIBRARY, LessonChoice } from "@/lib/lesson-content";
+import { getProgressValue, removeProgressValue, setProgressValue } from "@/lib/progress-storage";
 
 const NAVY = "#0F172A";
 const WHITE = "#FFFFFF";
@@ -34,8 +35,9 @@ export function LessonPlayer({ lessonNumber }: Props) {
     const load = async () => {
       try {
         const storedIndex = await AsyncStorage.getItem(indexKey);
-        if (storedIndex !== null) {
-          const parsed = Number(storedIndex);
+        const remoteIndex = storedIndex ?? (await getProgressValue(indexKey));
+        if (remoteIndex !== null) {
+          const parsed = Number(remoteIndex);
           if (!Number.isNaN(parsed)) {
             setI(Math.max(0, Math.min(parsed, total - 1)));
           }
@@ -52,6 +54,7 @@ export function LessonPlayer({ lessonNumber }: Props) {
     const saveIndex = async () => {
       try {
         await AsyncStorage.setItem(indexKey, String(i));
+        await setProgressValue(indexKey, String(i));
       } catch (e) {
         console.log(`Error saving lesson ${lessonNumber} index`, e);
       }
@@ -80,7 +83,9 @@ export function LessonPlayer({ lessonNumber }: Props) {
 
   const completeLesson = async () => {
     await AsyncStorage.setItem(lesson.completionKey, "true");
+    await setProgressValue(lesson.completionKey, "true");
     await AsyncStorage.removeItem(indexKey);
+    await removeProgressValue(indexKey);
     router.replace("/roadmap");
   };
 

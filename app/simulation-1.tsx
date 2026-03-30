@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { useProfile } from "@/components/profile-context";
+import { getProgressValues, setProgressValue } from "@/lib/progress-storage";
 
 const NAVY = "#08111F";
 const WHITE = "#F8FAFC";
@@ -655,14 +656,14 @@ export default function SimulationOneScreen() {
 
     Promise.all([
       AsyncStorage.getItem(LAST_BRAND_KEY),
-      AsyncStorage.getItem("completedLesson1"),
-    ]).then(([storedBrand, completedLesson]) => {
+      getProgressValues(["completedLesson1"]),
+    ]).then(([storedBrand, progress]) => {
       if (storedBrand) {
         setBrand(storedBrand);
         return;
       }
 
-      if (completedLesson !== "true") {
+      if (progress.completedLesson1 !== "true") {
         router.replace("/lesson-1");
       }
     });
@@ -1018,6 +1019,7 @@ export default function SimulationOneScreen() {
             <TouchableOpacity
               onPress={async () => {
                 await AsyncStorage.setItem(COMPLETED_SIMULATION_KEY, "true");
+                await setProgressValue(COMPLETED_SIMULATION_KEY, "true");
                 router.replace("/roadmap");
               }}
               style={styles.primaryButton}

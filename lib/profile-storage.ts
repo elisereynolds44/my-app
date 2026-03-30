@@ -1,7 +1,8 @@
-import { get, ref, set } from "firebase/database";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
 import { ProfileData } from "@/components/profile-context";
-import { getFirebaseDatabase } from "@/lib/firebase";
+import { getFirebaseFirestore } from "@/lib/firebase";
 
 const STORAGE_KEY = "investish.profile";
 
@@ -41,25 +42,54 @@ function saveLocalProfile(profile: ProfileData) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
 }
 
+async function loadDeviceProfile() {
+  const browserProfile = loadLocalProfile();
+  if (browserProfile) {
+    return browserProfile;
+  }
+
+  try {
+    const nativeValue = await AsyncStorage.getItem(STORAGE_KEY);
+    return parseProfile(nativeValue);
+  } catch {
+    return null;
+  }
+}
+
+async function saveDeviceProfile(profile: ProfileData) {
+  saveLocalProfile(profile);
+
+  try {
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
+  } catch {
+    // Ignore native persistence failures and fall back to browser storage when available.
+  }
+}
+
+export async function getStoredProfileOwnerKey() {
+  const profile = await loadDeviceProfile();
+  return profile?.email ? getProfileKey(profile.email) : null;
+}
+
 export async function loadStoredProfile() {
-  const localProfile = loadLocalProfile();
-  const database = getFirebaseDatabase();
+  const localProfile = await loadDeviceProfile();
+  const database = getFirebaseFirestore();
 
   if (!localProfile || !database) {
     return localProfile;
   }
 
   try {
-    const snapshot = await get(ref(database, `profiles/${getProfileKey(localProfile.email)}`));
+    const snapshot = await getDoc(doc(database, "profiles", getProfileKey(localProfile.email)));
 
     if (!snapshot.exists()) {
       return localProfile;
     }
 
-    const remoteProfile = snapshot.val() as ProfileData | null;
+    const remoteProfile = snapshot.data() as ProfileData | null;
 
     if (remoteProfile) {
-      saveLocalProfile(remoteProfile);
+      await saveDeviceProfile(remoteProfile);
     }
 
     return remoteProfile ?? localProfile;
@@ -69,16 +99,16 @@ export async function loadStoredProfile() {
 }
 
 export async function saveStoredProfile(profile: ProfileData) {
-  saveLocalProfile(profile);
+  await saveDeviceProfile(profile);
 
-  const database = getFirebaseDatabase();
+  const database = getFirebaseFirestore();
 
   if (!database) {
     return;
   }
 
   try {
-    await set(ref(database, `profiles/${getProfileKey(profile.email)}`), profile);
+    await setDoc(doc(database, "profiles", getProfileKey(profile.email)), profile, { merge: true });
   } catch {
     // Keep local persistence working even if remote sync fails.
   }

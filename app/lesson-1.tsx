@@ -3,6 +3,8 @@ import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+import { getProgressValue, removeProgressValue, setProgressValue } from "@/lib/progress-storage";
+
 const NAVY = "#0F172A";
 const WHITE = "#FFFFFF";
 const GREEN = "#7ED6A5";
@@ -653,7 +655,7 @@ export default function LessonOneScreen() {
         const storedBrand = await AsyncStorage.getItem(BRAND_KEY);
         if (storedBrand) setFavoriteBrand(storedBrand);
 
-        const storedIndex = await AsyncStorage.getItem(INDEX_KEY);
+        const storedIndex = (await AsyncStorage.getItem(INDEX_KEY)) ?? (await getProgressValue(INDEX_KEY));
         if (storedIndex !== null) {
           const parsed = Number(storedIndex);
           if (!Number.isNaN(parsed)) {
@@ -684,6 +686,7 @@ export default function LessonOneScreen() {
     const saveIndex = async () => {
       try {
         await AsyncStorage.setItem(INDEX_KEY, String(i));
+        await setProgressValue(INDEX_KEY, String(i));
       } catch (e) {
         console.log("Error saving lesson1SlideIndex", e);
       }
@@ -745,6 +748,7 @@ export default function LessonOneScreen() {
     try {
       await AsyncStorage.multiRemove([INDEX_KEY, BRAND_KEY]);
       await AsyncStorage.setItem(INDEX_KEY, "0");
+      await removeProgressValue(INDEX_KEY);
       setFavoriteBrand(null);
       setChoice(null);
       setChecked(false);
@@ -1137,7 +1141,9 @@ export default function LessonOneScreen() {
           <TouchableOpacity
             onPress={async () => {
               await AsyncStorage.setItem("completedLesson1", "true");
+              await setProgressValue("completedLesson1", "true");
               await AsyncStorage.setItem(INDEX_KEY, String(total - 1));
+              await setProgressValue(INDEX_KEY, String(total - 1));
               await AsyncStorage.removeItem(BRAND_KEY);
               if (favoriteBrand) {
                 await AsyncStorage.setItem(LAST_BRAND_KEY, favoriteBrand);

@@ -10,6 +10,8 @@ import {
   View,
 } from "react-native";
 
+import { getProgressValues } from "@/lib/progress-storage";
+
 const NAVY = "#0F172A";
 const WHITE = "#FFFFFF";
 const MUTED = "#CBD5E1";
@@ -88,16 +90,16 @@ export default function RoadmapScreen() {
     useCallback(() => {
       const load = async () => {
         try {
-          const lessonKeys = Array.from({ length: 9 }, (_, index) =>
-            AsyncStorage.getItem(`completedLesson${index + 2}`)
-          );
-
-          const [lessonDone, simulationDone, storedBrand, ...otherLessons] = await Promise.all([
-            AsyncStorage.getItem("completedLesson1"),
-            AsyncStorage.getItem("completedSimulation1"),
-            AsyncStorage.getItem("lesson1LastBrand"),
-            ...lessonKeys,
+          const progress = await getProgressValues([
+            "completedLesson1",
+            "completedSimulation1",
+            ...Array.from({ length: 9 }, (_, index) => `completedLesson${index + 2}`),
           ]);
+
+          const storedBrand = await AsyncStorage.getItem("lesson1LastBrand");
+          const lessonDone = progress.completedLesson1;
+          const simulationDone = progress.completedSimulation1;
+          const otherLessons = Array.from({ length: 9 }, (_, index) => progress[`completedLesson${index + 2}`]);
           setCompletedLesson1(lessonDone === "true");
           setCompletedSimulation1(simulationDone === "true");
           setLastBrand(storedBrand);

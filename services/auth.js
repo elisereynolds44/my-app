@@ -1,10 +1,14 @@
 import { createUserWithEmailAndPassword, getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import app from "../lib/firebase";
 
-const auth = getAuth(app);
+const auth = app ? getAuth(app) : null;
 
 // SIGN UP
 export const signUp = async (email, password) => {
+  if (!auth) {
+    throw new Error("Firebase is not configured yet. Add your Expo public Firebase environment variables first.");
+  }
+
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     return userCredential.user;
@@ -16,6 +20,10 @@ export const signUp = async (email, password) => {
 
 // LOGIN
 export const login = async (email, password) => {
+  if (!auth) {
+    throw new Error("Firebase is not configured yet. Add your Expo public Firebase environment variables first.");
+  }
+
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     return userCredential.user;
