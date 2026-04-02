@@ -23,6 +23,7 @@ export function LessonPlayer({ lessonNumber }: Props) {
   const [i, setI] = useState(0);
   const [choice, setChoice] = useState<LessonChoice | null>(null);
   const [checked, setChecked] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   const indexKey = `lesson${lessonNumber}SlideIndex`;
   const total = lesson.steps.length;
@@ -30,6 +31,11 @@ export function LessonPlayer({ lessonNumber }: Props) {
   const isFirst = i === 0;
   const isLast = i === total - 1;
   const progressPct = Math.round(((i + 1) / total) * 100);
+
+  const persistIndex = async (nextIndex: number) => {
+    await AsyncStorage.setItem(indexKey, String(nextIndex));
+    await setProgressValue(indexKey, String(nextIndex));
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -44,6 +50,8 @@ export function LessonPlayer({ lessonNumber }: Props) {
         }
       } catch (e) {
         console.log(`Error loading lesson ${lessonNumber} state`, e);
+      } finally {
+        setIsHydrated(true);
       }
     };
 
@@ -52,6 +60,10 @@ export function LessonPlayer({ lessonNumber }: Props) {
 
   useEffect(() => {
     const saveIndex = async () => {
+      if (!isHydrated) {
+        return;
+      }
+
       try {
         await AsyncStorage.setItem(indexKey, String(i));
         await setProgressValue(indexKey, String(i));
@@ -61,7 +73,7 @@ export function LessonPlayer({ lessonNumber }: Props) {
     };
 
     saveIndex();
-  }, [i, indexKey, lessonNumber]);
+  }, [i, indexKey, isHydrated, lessonNumber]);
 
   const goNext = () => {
     if (step.kind === "question") {
@@ -70,15 +82,19 @@ export function LessonPlayer({ lessonNumber }: Props) {
       }
     }
 
+    const nextIndex = Math.min(i + 1, total - 1);
     setChoice(null);
     setChecked(false);
-    setI((prev) => Math.min(prev + 1, total - 1));
+    setI(nextIndex);
+    void persistIndex(nextIndex);
   };
 
   const goBack = () => {
+    const nextIndex = Math.max(i - 1, 0);
     setChoice(null);
     setChecked(false);
-    setI((prev) => Math.max(prev - 1, 0));
+    setI(nextIndex);
+    void persistIndex(nextIndex);
   };
 
   const completeLesson = async () => {
@@ -92,7 +108,13 @@ export function LessonPlayer({ lessonNumber }: Props) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.topRow}>
-        <TouchableOpacity onPress={() => router.replace("/roadmap")} style={styles.lessonBackBtn}>
+        <TouchableOpacity
+          onPress={async () => {
+            await persistIndex(i);
+            router.replace("/roadmap");
+          }}
+          style={styles.lessonBackBtn}
+        >
           <Text style={styles.lessonBackText}>Back to roadmap</Text>
         </TouchableOpacity>
 

@@ -646,13 +646,14 @@ export default function LessonOneScreen() {
 
   const total = steps.length;
   const [i, setI] = useState(0);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   // Load saved brand + saved index.
   // Critical behavior: if there is no saved brand yet, force i = 0 so the pick screen shows.
   useEffect(() => {
     const load = async () => {
       try {
-        const storedBrand = await AsyncStorage.getItem(BRAND_KEY);
+        const storedBrand = (await AsyncStorage.getItem(BRAND_KEY)) ?? (await getProgressValue(BRAND_KEY));
         if (storedBrand) setFavoriteBrand(storedBrand);
 
         const storedIndex = (await AsyncStorage.getItem(INDEX_KEY)) ?? (await getProgressValue(INDEX_KEY));
@@ -675,6 +676,8 @@ export default function LessonOneScreen() {
       } catch (e) {
         console.log("Error loading lesson 1 state", e);
         setI(0);
+      } finally {
+        setIsHydrated(true);
       }
     };
 
@@ -684,6 +687,10 @@ export default function LessonOneScreen() {
   // Persist index
   useEffect(() => {
     const saveIndex = async () => {
+      if (!isHydrated) {
+        return;
+      }
+
       try {
         await AsyncStorage.setItem(INDEX_KEY, String(i));
         await setProgressValue(INDEX_KEY, String(i));
@@ -692,22 +699,28 @@ export default function LessonOneScreen() {
       }
     };
     saveIndex();
-  }, [i]);
+  }, [i, isHydrated]);
 
   // Persist brand
   useEffect(() => {
     const saveBrand = async () => {
+      if (!isHydrated) {
+        return;
+      }
+
       try {
         if (favoriteBrand) {
           await AsyncStorage.setItem(BRAND_KEY, favoriteBrand);
           await AsyncStorage.setItem(LAST_BRAND_KEY, favoriteBrand);
+          await setProgressValue(BRAND_KEY, favoriteBrand);
+          await setProgressValue(LAST_BRAND_KEY, favoriteBrand);
         }
       } catch (e) {
         console.log("Error saving lesson1Brand", e);
       }
     };
     saveBrand();
-  }, [favoriteBrand]);
+  }, [favoriteBrand, isHydrated]);
 
   const [choice, setChoice] = useState<Choice>(null);
   const [checked, setChecked] = useState(false);
@@ -721,6 +734,18 @@ export default function LessonOneScreen() {
 
   const canContinue = step.kind !== "pick" ? true : favoriteBrand !== null;
 
+  const persistLessonState = async (nextIndex: number, nextBrand = favoriteBrand) => {
+    await AsyncStorage.setItem(INDEX_KEY, String(nextIndex));
+    await setProgressValue(INDEX_KEY, String(nextIndex));
+
+    if (nextBrand) {
+      await AsyncStorage.setItem(BRAND_KEY, nextBrand);
+      await AsyncStorage.setItem(LAST_BRAND_KEY, nextBrand);
+      await setProgressValue(BRAND_KEY, nextBrand);
+      await setProgressValue(LAST_BRAND_KEY, nextBrand);
+    }
+  };
+
   const goNext = () => {
     if (step.kind === "pick" && !favoriteBrand) return;
 
@@ -729,19 +754,25 @@ export default function LessonOneScreen() {
       if (choice !== step.correct) return;
     }
 
+    const nextIndex = Math.min(i + 1, total - 1);
     setChoice(null);
     setChecked(false);
-    setI((prev) => Math.min(prev + 1, total - 1));
+    setI(nextIndex);
+    void persistLessonState(nextIndex);
   };
 
   const goBack = () => {
+    const nextIndex = Math.max(i - 1, 0);
     setChoice(null);
     setChecked(false);
-    setI((prev) => Math.max(prev - 1, 0));
+    setI(nextIndex);
+    void persistLessonState(nextIndex);
   };
 
   const exitLesson = () => {
-    router.replace("/roadmap");
+    void persistLessonState(i).then(() => {
+      router.replace("/roadmap");
+    });
   };
 
   const resetLesson = async () => {
@@ -749,6 +780,7 @@ export default function LessonOneScreen() {
       await AsyncStorage.multiRemove([INDEX_KEY, BRAND_KEY]);
       await AsyncStorage.setItem(INDEX_KEY, "0");
       await removeProgressValue(INDEX_KEY);
+      await removeProgressValue(BRAND_KEY);
       setFavoriteBrand(null);
       setChoice(null);
       setChecked(false);
@@ -794,7 +826,10 @@ export default function LessonOneScreen() {
                 <TouchableOpacity
                   key={opt}
                   activeOpacity={0.9}
-                  onPress={() => setFavoriteBrand(opt)}
+                  onPress={() => {
+                    setFavoriteBrand(opt);
+                    void persistLessonState(i, opt);
+                  }}
                   style={[styles.pickOption, selected && styles.pickOptionSelected]}
                 >
                   <Text style={[styles.pickText, selected && styles.pickTextSelected]}>{opt}</Text>
@@ -1145,8 +1180,10 @@ export default function LessonOneScreen() {
               await AsyncStorage.setItem(INDEX_KEY, String(total - 1));
               await setProgressValue(INDEX_KEY, String(total - 1));
               await AsyncStorage.removeItem(BRAND_KEY);
+              await removeProgressValue(BRAND_KEY);
               if (favoriteBrand) {
                 await AsyncStorage.setItem(LAST_BRAND_KEY, favoriteBrand);
+                await setProgressValue(LAST_BRAND_KEY, favoriteBrand);
               }
               router.replace({
                 pathname: "/simulation-1",
