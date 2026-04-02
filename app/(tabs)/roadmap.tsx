@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 
-import { getProgressValues } from "@/lib/progress-storage";
+import { getProgressValue, getProgressValues } from "@/lib/progress-storage";
 
 const NAVY = "#0F172A";
 const WHITE = "#FFFFFF";
@@ -96,7 +96,9 @@ export default function RoadmapScreen() {
             ...Array.from({ length: 9 }, (_, index) => `completedLesson${index + 2}`),
           ]);
 
-          const storedBrand = await AsyncStorage.getItem("lesson1LastBrand");
+          const storedBrand =
+            (await AsyncStorage.getItem("lesson1LastBrand")) ??
+            (await getProgressValue("lesson1LastBrand"));
           const lessonDone = progress.completedLesson1;
           const simulationDone = progress.completedSimulation1;
           const otherLessons = Array.from({ length: 9 }, (_, index) => progress[`completedLesson${index + 2}`]);

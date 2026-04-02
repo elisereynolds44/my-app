@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { useProfile } from "@/components/profile-context";
-import { getProgressValues, setProgressValue } from "@/lib/progress-storage";
+import { getProgressValue, getProgressValues, setProgressValue } from "@/lib/progress-storage";
 
 const NAVY = "#08111F";
 const WHITE = "#F8FAFC";
@@ -655,7 +655,11 @@ export default function SimulationOneScreen() {
     }
 
     Promise.all([
-      AsyncStorage.getItem(LAST_BRAND_KEY),
+      Promise.resolve(
+        AsyncStorage.getItem(LAST_BRAND_KEY).then(
+          async (storedBrand) => storedBrand ?? (await getProgressValue(LAST_BRAND_KEY))
+        )
+      ),
       getProgressValues(["completedLesson1"]),
     ]).then(([storedBrand, progress]) => {
       if (storedBrand) {
