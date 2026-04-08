@@ -1,3 +1,4 @@
+import { Image } from "expo-image";
 import { router } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -12,6 +13,7 @@ import {
   View,
 } from "react-native";
 
+import { AppBackdrop } from "@/components/app-backdrop";
 import { CharacterOption, useProfile } from "@/components/profile-context";
 
 const NAVY = "#0F172A";
@@ -20,15 +22,22 @@ const GREEN = "#7ED6A5";
 const MUTED = "#CBD5E1";
 const BORDER = "#E2E8F0";
 const SOFT_RED = "#F87171";
-const PANEL = "#F8FAFC";
 
 export default function ProfileSetupScreen() {
-  const { characterOptions, completeProfile, isHydrated, profile, selectedCharacter } = useProfile();
+  const { characterOptions, completeProfile, isHydrated, logOutProfile, profile, selectedCharacter } =
+    useProfile();
 
   const [email, setEmail] = useState(profile?.email ?? "");
   const [firstName, setFirstName] = useState(profile?.firstName ?? "");
-  const [characterId, setCharacterId] = useState(profile?.characterId ?? "");
+  const [characterId, setCharacterId] = useState(selectedCharacter?.id ?? profile?.characterId ?? "");
   const [isEditing, setIsEditing] = useState(!profile);
+
+  useEffect(() => {
+    setEmail(profile?.email ?? "");
+    setFirstName(profile?.firstName ?? "");
+    setCharacterId(selectedCharacter?.id ?? profile?.characterId ?? "");
+    setIsEditing(!profile);
+  }, [profile, selectedCharacter]);
 
   const emailLooksValid = useMemo(() => {
     const trimmed = email.trim().toLowerCase();
@@ -80,7 +89,9 @@ export default function ProfileSetupScreen() {
   if (!isHydrated) {
     return (
       <SafeAreaView style={styles.container}>
+        <AppBackdrop accent={GREEN} />
         <View style={styles.loadingState}>
+          <View style={styles.loadingPulse} />
           <Text style={styles.loadingTitle}>Loading your profile…</Text>
           <Text style={styles.loadingSubtitle}>Pulling in your saved progress now.</Text>
         </View>
@@ -88,7 +99,7 @@ export default function ProfileSetupScreen() {
     );
   }
 
-  function saveProfile() {
+  async function saveProfile() {
     if (!firstName.trim()) {
       Alert.alert("Please add your first name.");
       return;
@@ -104,7 +115,7 @@ export default function ProfileSetupScreen() {
       return;
     }
 
-    completeProfile({
+    await completeProfile({
       characterId,
       email: email.trim().toLowerCase(),
       firstName: firstName.trim(),
@@ -114,9 +125,16 @@ export default function ProfileSetupScreen() {
     router.replace("/roadmap");
   }
 
+  async function handleLogOut() {
+    await logOutProfile();
+    setIsEditing(true);
+    router.replace("/welcome");
+  }
+
   if (profile && !isEditing) {
     return (
       <SafeAreaView style={styles.container}>
+        <AppBackdrop accent={GREEN} />
         <ScrollView contentContainerStyle={styles.contentContainer}>
           <Text style={styles.title}>Your profile</Text>
           <Text style={styles.subtitle}>Everything here should help your learning journey feel personal.</Text>
@@ -128,6 +146,9 @@ export default function ProfileSetupScreen() {
             <TouchableOpacity style={styles.secondaryButton} onPress={() => setIsEditing(true)}>
               <Text style={styles.secondaryButtonText}>Edit profile</Text>
             </TouchableOpacity>
+            <TouchableOpacity style={styles.logOutButton} onPress={handleLogOut}>
+              <Text style={styles.logOutButtonText}>Log out</Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -136,6 +157,7 @@ export default function ProfileSetupScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <AppBackdrop accent={GREEN} />
       <ScrollView contentContainerStyle={styles.contentContainer}>
         <Text style={styles.title}>Set up your profile</Text>
         <Text style={styles.subtitle}>We only ask for what you’ll actually use as you learn.</Text>
@@ -171,7 +193,7 @@ export default function ProfileSetupScreen() {
 
           {!!email.trim() && (
             <Text style={[styles.validation, emailLooksValid ? styles.ok : styles.bad]}>
-              {emailLooksValid ? "Looks good ✅" : "Please use a valid email address"}
+              {emailLooksValid ? "Looks good" : "Please use a valid email address"}
             </Text>
           )}
         </Animated.View>
@@ -182,8 +204,11 @@ export default function ProfileSetupScreen() {
           <Text style={styles.stepLabel}>Step 2 of 2</Text>
           <Text style={styles.sectionTitle}>Pick your character</Text>
           <Text style={styles.helper}>
-            Pick the one with the vibe you want. You can always change it later.
+            Pick one of the six starter avatars. You can change it later.
           </Text>
+          <View style={styles.avatarPill}>
+            <Text style={styles.avatarPillText}>6 clean starter avatars</Text>
+          </View>
 
           <View style={styles.characterGrid}>
             {characterOptions.map((character) => {
@@ -233,7 +258,7 @@ function CharacterBadge({
   }
 
   const badgeSize = size === "large" ? 96 : 64;
-  const fontSize = size === "large" ? 42 : 28;
+  const imageSize = size === "large" ? 88 : 56;
 
   return (
     <View
@@ -246,7 +271,11 @@ function CharacterBadge({
         },
       ]}
     >
-      <Text style={[styles.characterEmoji, { fontSize }]}>{character.emoji}</Text>
+      <Image
+        source={character.imageSource}
+        style={{ width: imageSize, height: imageSize }}
+        contentFit="contain"
+      />
     </View>
   );
 }
@@ -287,6 +316,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: 20,
+    paddingBottom: 110,
     gap: 14,
   },
   title: {
@@ -319,9 +349,11 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(126,214,165,0.6)",
   },
   card: {
-    backgroundColor: WHITE,
-    borderRadius: 14,
-    padding: 16,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.10)",
+    padding: 18,
     marginBottom: 14,
     gap: 10,
   },
@@ -338,17 +370,17 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "800",
-    color: NAVY,
+    color: WHITE,
   },
   helper: {
     fontSize: 13,
-    color: "#64748B",
+    color: MUTED,
     lineHeight: 18,
   },
   label: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#334155",
+    color: WHITE,
     marginBottom: 6,
   },
   spacedLabel: {
@@ -356,13 +388,13 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: WHITE,
-    borderRadius: 10,
+    borderColor: "rgba(255,255,255,0.10)",
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderRadius: 14,
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 12,
     fontSize: 14,
-    color: NAVY,
+    color: WHITE,
   },
   validation: {
     fontSize: 13,
@@ -378,53 +410,81 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 12,
+    marginTop: 2,
+  },
+  avatarPill: {
+    alignSelf: "flex-start",
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.10)",
+    backgroundColor: "rgba(255,255,255,0.06)",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    marginBottom: 4,
+  },
+  avatarPillText: {
+    color: MUTED,
+    fontSize: 12,
+    fontWeight: "800",
   },
   characterCard: {
-    width: "30%",
+    width: "48%",
     borderWidth: 1,
-    borderRadius: 14,
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    backgroundColor: PANEL,
+    borderRadius: 18,
+    paddingVertical: 14,
+    paddingHorizontal: 10,
+    backgroundColor: "rgba(255,255,255,0.06)",
     alignItems: "center",
-    gap: 8,
+    gap: 10,
   },
   characterBadge: {
     borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
-  },
-  characterEmoji: {
-    textAlign: "center",
+    backgroundColor: "#FFFFFF",
   },
   characterLabel: {
-    color: NAVY,
-    fontSize: 13,
+    color: WHITE,
+    fontSize: 14,
     fontWeight: "800",
     textAlign: "center",
   },
   saveButton: {
-    backgroundColor: NAVY,
-    paddingVertical: 12,
-    borderRadius: 14,
+    backgroundColor: GREEN,
+    paddingVertical: 14,
+    borderRadius: 16,
     alignItems: "center",
     marginTop: 8,
   },
   saveButtonText: {
-    color: WHITE,
+    color: NAVY,
     fontWeight: "900",
     fontSize: 16,
   },
   secondaryButton: {
     marginTop: 8,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: BORDER,
+    borderColor: "rgba(255,255,255,0.10)",
     paddingVertical: 12,
     paddingHorizontal: 18,
+    backgroundColor: "rgba(255,255,255,0.06)",
   },
   secondaryButtonText: {
-    color: NAVY,
+    color: WHITE,
+    fontWeight: "800",
+  },
+  logOutButton: {
+    marginTop: 2,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(248,113,113,0.34)",
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    backgroundColor: "rgba(248,113,113,0.10)",
+  },
+  logOutButtonText: {
+    color: SOFT_RED,
     fontWeight: "800",
   },
   buttonDisabled: {
@@ -437,6 +497,15 @@ const styles = StyleSheet.create({
     padding: 24,
     gap: 8,
   },
+  loadingPulse: {
+    width: 68,
+    height: 68,
+    borderRadius: 999,
+    backgroundColor: "rgba(126,214,165,0.16)",
+    borderWidth: 1,
+    borderColor: "rgba(126,214,165,0.30)",
+    marginBottom: 6,
+  },
   loadingTitle: {
     color: WHITE,
     fontSize: 22,
@@ -448,19 +517,21 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   summaryCard: {
-    backgroundColor: WHITE,
-    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.10)",
     padding: 20,
     alignItems: "center",
     gap: 10,
   },
   summaryName: {
-    color: NAVY,
+    color: WHITE,
     fontSize: 24,
     fontWeight: "900",
   },
   summaryEmail: {
-    color: "#475569",
+    color: MUTED,
     fontSize: 14,
   },
 });

@@ -1,0 +1,33 @@
+[debug] [2026-04-03T00:19:00.591Z] ----------------------------------------------------------------------
+[debug] [2026-04-03T00:19:00.592Z] Command:       /opt/homebrew/Cellar/node/25.9.0/bin/node /opt/homebrew/bin/firebase projects:list
+[debug] [2026-04-03T00:19:00.592Z] CLI Version:   15.13.0
+[debug] [2026-04-03T00:19:00.593Z] Platform:      darwin
+[debug] [2026-04-03T00:19:00.593Z] Node Version:  v25.9.0
+[debug] [2026-04-03T00:19:00.593Z] Time:          Thu Apr 02 2026 17:19:00 GMT-0700 (Pacific Daylight Time)
+[debug] [2026-04-03T00:19:00.593Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-04-03T00:19:00.595Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-04-03T00:19:00.595Z] > authorizing via signed-in user (elreynolds@westmont.edu)
+[debug] [2026-04-03T00:19:00.597Z] Checked if tokens are valid: true, expires at: 1775179047923
+[debug] [2026-04-03T00:19:00.597Z] Checked if tokens are valid: true, expires at: 1775179047923
+[debug] [2026-04-03T00:19:00.597Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=1000
+[debug] [2026-04-03T00:19:00.622Z] *** [apiv2] error from fetch(https://firebase.googleapis.com/v1beta1/projects?pageSize=1000, {"headers":{},"method":"GET","signal":{"reason":""}}): FetchError: request to https://firebase.googleapis.com/v1beta1/projects?pageSize=1000 failed, reason: getaddrinfo ENOTFOUND firebase.googleapis.com
+[debug] [2026-04-03T00:19:00.622Z] Failed to make request to https://firebase.googleapis.com/v1beta1/projects?pageSize=1000
+[debug] [2026-04-03T00:19:00.622Z] FirebaseError: Failed to make request to https://firebase.googleapis.com/v1beta1/projects?pageSize=1000
+    at RetryOperation._fn (/opt/homebrew/lib/node_modules/firebase-tools/lib/apiv2.js:282:31)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+[error] 
+[error] Error: Failed to list Firebase projects. See firebase-debug.log for more info.
+[debug] [2026-04-03T00:19:00.882Z] Error: EPERM: operation not permitted, open '/Users/elisereynolds/.config/configstore/firebase-tools.json.3541481388'
+    at Object.openSync (node:fs:556:18)
+    at writeFile.writeFileSync [as sync] (/opt/homebrew/lib/node_modules/firebase-tools/node_modules/write-file-atomic/index.js:205:13)
+    at set all (/opt/homebrew/lib/node_modules/firebase-tools/node_modules/configstore/index.js:61:20)
+    at Configstore.delete (/opt/homebrew/lib/node_modules/firebase-tools/node_modules/configstore/index.js:101:12)
+    at process.<anonymous> (/opt/homebrew/lib/node_modules/firebase-tools/lib/bin/cli.js:65:45)
+    at process.emit (node:events:521:24)
+    at process.exit (node:internal/process/per_thread:236:15)
+    at Timeout._onTimeout (/opt/homebrew/lib/node_modules/firebase-tools/lib/errorOut.js:20:17)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[error] 
+[error] Error: An unexpected error has occurred.

@@ -10,7 +10,7 @@ function canUseLocalStorage() {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
 }
 
-function getProfileKey(email: string) {
+export function getProfileKey(email: string) {
   return email.trim().toLowerCase().replace(/[.#$\[\]/]/g, "_");
 }
 
@@ -63,6 +63,18 @@ async function saveDeviceProfile(profile: ProfileData) {
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
   } catch {
     // Ignore native persistence failures and fall back to browser storage when available.
+  }
+}
+
+export async function clearStoredProfile() {
+  if (canUseLocalStorage()) {
+    window.localStorage.removeItem(STORAGE_KEY);
+  }
+
+  try {
+    await AsyncStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // Ignore local persistence cleanup failures.
   }
 }
 

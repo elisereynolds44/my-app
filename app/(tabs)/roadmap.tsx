@@ -1,4 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import {
@@ -9,12 +8,15 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
-import { getProgressValue, getProgressValues } from "@/lib/progress-storage";
+import { AppBackdrop } from "@/components/app-backdrop";
+import { getProgressValues } from "@/lib/progress-storage";
 
 const NAVY = "#0F172A";
 const WHITE = "#FFFFFF";
 const MUTED = "#CBD5E1";
+const GREEN = "#7ED6A5";
+const PANEL = "rgba(255,255,255,0.06)";
+const BORDER = "rgba(255,255,255,0.10)";
 
 const MODULES = [
   {
@@ -80,10 +82,8 @@ const MODULES = [
 ];
 
 export default function RoadmapScreen() {
-  const [completedLesson1, setCompletedLesson1] = useState(false);
-  const [completedSimulation1, setCompletedSimulation1] = useState(false);
   const [completedLessons, setCompletedLessons] = useState<Record<number, boolean>>({});
-  const [lastBrand, setLastBrand] = useState<string | null>(null);
+  const [completedGames, setCompletedGames] = useState<Record<number, boolean>>({});
 
   // Refresh when returning to this screen
   useFocusEffect(
@@ -91,28 +91,24 @@ export default function RoadmapScreen() {
       const load = async () => {
         try {
           const progress = await getProgressValues([
-            "completedLesson1",
-            "completedSimulation1",
-            ...Array.from({ length: 9 }, (_, index) => `completedLesson${index + 2}`),
+            ...Array.from({ length: 10 }, (_, index) => `completedLesson${index + 1}`),
+            ...Array.from({ length: 10 }, (_, index) => `completedGame${index + 1}`),
           ]);
 
-          const storedBrand =
-            (await AsyncStorage.getItem("lesson1LastBrand")) ??
-            (await getProgressValue("lesson1LastBrand"));
-          const lessonDone = progress.completedLesson1;
-          const simulationDone = progress.completedSimulation1;
-          const otherLessons = Array.from({ length: 9 }, (_, index) => progress[`completedLesson${index + 2}`]);
-          setCompletedLesson1(lessonDone === "true");
-          setCompletedSimulation1(simulationDone === "true");
-          setLastBrand(storedBrand);
           setCompletedLessons(
-            otherLessons.reduce<Record<number, boolean>>((acc, value, index) => {
-              acc[index + 2] = value === "true";
+            Array.from({ length: 10 }, (_, index) => index + 1).reduce<Record<number, boolean>>((acc, lessonNumber) => {
+              acc[lessonNumber] = progress[`completedLesson${lessonNumber}`] === "true";
+              return acc;
+            }, {})
+          );
+          setCompletedGames(
+            Array.from({ length: 10 }, (_, index) => index + 1).reduce<Record<number, boolean>>((acc, lessonNumber) => {
+              acc[lessonNumber] = progress[`completedGame${lessonNumber}`] === "true";
               return acc;
             }, {})
           );
         } catch (e) {
-          console.log("Error loading completedLesson1", e);
+          console.log("Error loading roadmap progress", e);
         }
       };
 
@@ -121,13 +117,9 @@ export default function RoadmapScreen() {
   );
 
   const unlockedIndex = useMemo(() => {
-    if (!completedSimulation1) {
-      return 0;
-    }
+    let unlocked = 0;
 
-    let unlocked = 1;
-
-    for (let lessonNumber = 2; lessonNumber <= 9; lessonNumber += 1) {
+    for (let lessonNumber = 1; lessonNumber <= 9; lessonNumber += 1) {
       if (completedLessons[lessonNumber]) {
         unlocked += 1;
       } else {
@@ -136,39 +128,48 @@ export default function RoadmapScreen() {
     }
 
     return unlocked;
-  }, [completedLessons, completedSimulation1]);
+  }, [completedLessons]);
+
+  const completedCount = useMemo(
+    () => Object.values(completedGames).filter(Boolean).length,
+    [completedGames]
+  );
 
   return (
     <SafeAreaView style={styles.container}>
+      <AppBackdrop accent={GREEN} />
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Your learning roadmap</Text>
-        <Text style={styles.subtitle}>
-          Start with Module 1. New modules unlock as you progress.
-        </Text>
+        <View style={styles.heroCard}>
+          <Text style={styles.kicker}>ROADMAP</Text>
+          <Text style={styles.title}>Your learning path</Text>
+          <Text style={styles.subtitle}>
+            Lessons unlock in order. Finish a lesson, then play its mini game.
+          </Text>
+          <View style={styles.heroStats}>
+            <View style={styles.heroStatCard}>
+              <Text style={styles.heroStatLabel}>Lessons open</Text>
+              <Text style={styles.heroStatValue}>{unlockedIndex + 1}</Text>
+            </View>
+            <View style={styles.heroStatCard}>
+              <Text style={styles.heroStatLabel}>Games done</Text>
+              <Text style={styles.heroStatValue}>{completedCount}</Text>
+            </View>
+          </View>
+        </View>
 
         {MODULES.map((module, i) => {
           const isReady = i <= unlockedIndex && Boolean(module.route);
-          const isModuleOne = module.id === "lesson-1";
           const lessonNumber = Number(module.id.replace("lesson-", ""));
-          const isCompleted = isModuleOne && completedSimulation1;
-          const isLessonDone = isModuleOne && completedLesson1;
-          const isStandardLessonCompleted = !isModuleOne && completedLessons[lessonNumber];
-          const actionLabel = isModuleOne
-            ? isCompleted
-              ? "Review lesson"
-              : isLessonDone
-                ? "Review lesson"
-                : "Start lesson 1"
-            : isStandardLessonCompleted
-              ? "Review module"
-              : "Start module";
+          const isLessonDone = completedLessons[lessonNumber];
+          const isGameDone = completedGames[lessonNumber];
+          const lessonLabel = isLessonDone ? "Review lesson" : lessonNumber === 1 ? "Start lesson 1" : "Start lesson";
 
           return (
             <View key={module.id} style={styles.card}>
               <View style={styles.cardHeader}>
                 <Text style={styles.cardTitle}>{module.title}</Text>
 
-                {isCompleted || isStandardLessonCompleted ? (
+                {isGameDone ? (
                   <Text style={[styles.badge, styles.badgeComplete]}>
                     Completed
                   </Text>
@@ -188,46 +189,37 @@ export default function RoadmapScreen() {
                 {module.description}
               </Text>
 
-              {isModuleOne && isLessonDone && !completedSimulation1 ? (
+              {isLessonDone && !isGameDone ? (
                 <Text style={styles.helperText}>
-                  Lesson complete. You can review it anytime, and the simulation is ready too.
+                  Lesson complete. Review it anytime, then play the mini game to lock the concept in.
                 </Text>
-              ) : isModuleOne && !isLessonDone ? (
+              ) : isGameDone ? (
                 <Text style={styles.helperText}>
-                  Complete Lesson 1 first, then the simulation opens immediately after.
+                  Lesson and game complete. You can review the lesson or replay the game anytime.
                 </Text>
-              ) : isModuleOne && isCompleted ? (
+              ) : isReady ? (
                 <Text style={styles.helperText}>
-                  Module 1 is complete. You can revisit the lesson or replay the simulation.
-                </Text>
-              ) : !isModuleOne && isStandardLessonCompleted ? (
-                <Text style={styles.helperText}>
-                  Lesson complete. You can review it anytime.
+                  Finish the lesson first. The mini game unlocks right after.
                 </Text>
               ) : null}
 
-              {isModuleOne && isLessonDone ? (
+              {isLessonDone ? (
                 <View style={styles.buttonRow}>
                   <TouchableOpacity
                     accessibilityRole="button"
                     style={[styles.button, styles.secondaryButton]}
-                    onPress={() => router.push("/lesson-1")}
+                    onPress={() => router.push(module.route as any)}
                   >
-                    <Text style={[styles.buttonText, styles.secondaryButtonText]}>{actionLabel}</Text>
+                    <Text style={[styles.buttonText, styles.secondaryButtonText]}>{lessonLabel}</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
                     accessibilityRole="button"
                     style={styles.button}
-                    onPress={() =>
-                      router.push({
-                        pathname: "/simulation-1",
-                        params: lastBrand ? { brand: lastBrand } : undefined,
-                      } as any)
-                    }
+                    onPress={() => router.push(`/game-${lessonNumber}` as any)}
                   >
                     <Text style={styles.buttonText}>
-                      {isCompleted ? "Replay simulation" : "Play simulation"}
+                      {isGameDone ? "Replay game" : "Play game"}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -237,7 +229,7 @@ export default function RoadmapScreen() {
                   style={styles.button}
                   onPress={() => router.push(module.route as any)}
                 >
-                  <Text style={styles.buttonText}>{actionLabel}</Text>
+                  <Text style={styles.buttonText}>{lessonLabel}</Text>
                 </TouchableOpacity>
               ) : (
                 <View style={styles.lockedButton}>
@@ -261,23 +253,66 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
+    paddingBottom: 120,
     gap: 14,
+  },
+  heroCard: {
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: BORDER,
+    padding: 22,
+    marginBottom: 4,
+  },
+  kicker: {
+    color: GREEN,
+    fontSize: 12,
+    fontWeight: "900",
+    letterSpacing: 1,
+    marginBottom: 8,
   },
   title: {
     color: WHITE,
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: "900",
   },
   subtitle: {
     color: MUTED,
-    fontSize: 14,
-    marginTop: 4,
-    marginBottom: 8,
+    fontSize: 15,
+    marginTop: 8,
+    lineHeight: 22,
+  },
+  heroStats: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 18,
+  },
+  heroStatCard: {
+    flex: 1,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: BORDER,
+    padding: 14,
+  },
+  heroStatLabel: {
+    color: MUTED,
+    fontSize: 11,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    marginBottom: 6,
+  },
+  heroStatValue: {
+    color: WHITE,
+    fontSize: 24,
+    fontWeight: "900",
   },
   card: {
-    backgroundColor: WHITE,
-    borderRadius: 14,
-    padding: 14,
+    backgroundColor: PANEL,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: BORDER,
+    padding: 18,
     gap: 10,
   },
   cardHeader: {
@@ -286,7 +321,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   cardTitle: {
-    color: NAVY,
+    color: WHITE,
     fontSize: 17,
     fontWeight: "800",
     flex: 1,
@@ -300,31 +335,31 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   badgeReady: {
-    color: "#065F46",
-    backgroundColor: "#D1FAE5",
+    color: NAVY,
+    backgroundColor: GREEN,
   },
   badgeLocked: {
-    color: "#6B7280",
-    backgroundColor: "#E5E7EB",
+    color: MUTED,
+    backgroundColor: "rgba(255,255,255,0.08)",
   },
   badgeComplete: {
-    color: "#1D4ED8",
-    backgroundColor: "#DBEAFE",
+    color: WHITE,
+    backgroundColor: "rgba(96,165,250,0.24)",
   },
   cardDescription: {
-    color: "#334155",
+    color: WHITE,
     fontSize: 14,
     lineHeight: 20,
   },
   helperText: {
-    color: "#475569",
+    color: MUTED,
     fontSize: 13,
     lineHeight: 18,
   },
   button: {
-    backgroundColor: NAVY,
-    borderRadius: 10,
-    paddingVertical: 10,
+    backgroundColor: GREEN,
+    borderRadius: 14,
+    paddingVertical: 12,
     alignItems: "center",
     flex: 1,
   },
@@ -333,23 +368,25 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   secondaryButton: {
-    backgroundColor: "#E2E8F0",
+    backgroundColor: "rgba(255,255,255,0.08)",
   },
   secondaryButtonText: {
-    color: NAVY,
+    color: WHITE,
   },
   buttonText: {
-    color: WHITE,
+    color: NAVY,
     fontWeight: "900",
   },
   lockedButton: {
-    borderRadius: 10,
-    paddingVertical: 10,
+    borderRadius: 14,
+    paddingVertical: 12,
     alignItems: "center",
-    backgroundColor: "#F1F5F9",
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderWidth: 1,
+    borderColor: BORDER,
   },
   lockedButtonText: {
-    color: "#64748B",
+    color: MUTED,
     fontWeight: "700",
   },
 });

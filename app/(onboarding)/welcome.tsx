@@ -1,53 +1,57 @@
 import { router } from "expo-router";
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import {
-  Animated,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { Animated, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+
+import { AppBackdrop } from "@/components/app-backdrop";
 
 const NAVY = "#0F172A";
 const WHITE = "#FFFFFF";
 const GREEN = "#7ED6A5";
 const MUTED = "#CBD5E1";
-const BORDER = "rgba(255,255,255,0.14)";
+const GOLD = "#FFD76A";
+const SKY = "#94D7FF";
+const CORAL = "#FF9F8A";
 
 export default function WelcomeScreen() {
-  const brands = useMemo(
-    () => [
-      "Chipotle",
-      "Apple",
-      "Nike",
-      "Spotify",
-      "Trader Joe’s",
-      "Target",
-      "Netflix",
-      "Lululemon",
-    ],
-    []
-  );
-
-  // dissolve in
   const screenOpacity = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    Animated.timing(screenOpacity, {
-      toValue: 1,
-      duration: 380,
-      useNativeDriver: true,
-    }).start();
-  }, [screenOpacity]);
+  const floatA = useRef(new Animated.Value(0)).current;
+  const floatB = useRef(new Animated.Value(0)).current;
+  const revealCard = useRef(new Animated.Value(0)).current;
+  const revealCTA = useRef(new Animated.Value(0)).current;
 
-  // typewriter welcome copy
-  const full1 = "Welcome to Invest-ish.";
-  const full2 =
-    "A personal finance app for college students. We make investing feel simple, not scary. Start with what feels familiar, explore how companies grow, and slowly build the confidence to invest in your future.";
+  const full1 = "Start with the basics.";
+  const full2 = "Learn how investing works, build steady habits, and grow confidence one small step at a time.";
 
   const [line1, setLine1] = useState("");
   const [line2, setLine2] = useState("");
   const [doneTyping, setDoneTyping] = useState(false);
+
+  useEffect(() => {
+    Animated.timing(screenOpacity, {
+      toValue: 1,
+      duration: 420,
+      useNativeDriver: true,
+    }).start();
+
+    const makeFloat = (value: Animated.Value, toValue: number, duration: number) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(value, {
+            toValue,
+            duration,
+            useNativeDriver: true,
+          }),
+          Animated.timing(value, {
+            toValue: 0,
+            duration,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+
+    makeFloat(floatA, -12, 2400);
+    makeFloat(floatB, 10, 2600);
+  }, [floatA, floatB, screenOpacity]);
 
   useEffect(() => {
     let i = 0;
@@ -57,7 +61,6 @@ export default function WelcomeScreen() {
       if (i >= full1.length) {
         clearInterval(id1);
 
-        // small pause then start line 2
         setTimeout(() => {
           let j = 0;
           const id2 = setInterval(() => {
@@ -67,38 +70,32 @@ export default function WelcomeScreen() {
               clearInterval(id2);
               setDoneTyping(true);
             }
-          }, 58);
-        }, 350);
+          }, 34);
+        }, 240);
       }
-    }, 100);
+    }, 56);
 
     return () => clearInterval(id1);
   }, []);
 
-  // reveal timing
-  const revealCard = useRef(new Animated.Value(0)).current;
-  const revealCTA = useRef(new Animated.Value(0)).current;
-
   useEffect(() => {
     if (!doneTyping) return;
 
-    // show carousel card shortly after typing
     const t1 = setTimeout(() => {
       Animated.timing(revealCard, {
         toValue: 1,
-        duration: 420,
+        duration: 380,
         useNativeDriver: true,
       }).start();
-    }, 350);
+    }, 160);
 
-    // show CTA ~5s after carousel begins
     const t2 = setTimeout(() => {
       Animated.timing(revealCTA, {
         toValue: 1,
-        duration: 360,
+        duration: 320,
         useNativeDriver: true,
       }).start();
-    }, 350 + 5000);
+    }, 560);
 
     return () => {
       clearTimeout(t1);
@@ -106,56 +103,44 @@ export default function WelcomeScreen() {
     };
   }, [doneTyping, revealCard, revealCTA]);
 
-  // carousel animation
-  const [idx, setIdx] = useState(0);
-  const wordFade = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    if (!doneTyping) return;
-
-    const id = setInterval(() => {
-      wordFade.setValue(0);
-      setIdx((p) => (p + 1) % brands.length);
-      Animated.timing(wordFade, {
-        toValue: 1,
-        duration: 260,
-        useNativeDriver: true,
-      }).start();
-    }, 2000);
-
-    return () => clearInterval(id);
-  }, [doneTyping, brands.length, wordFade]);
-
   return (
     <SafeAreaView style={styles.container}>
+      <AppBackdrop accent={GREEN} />
       <Animated.View style={[styles.content, { opacity: screenOpacity }]}>
-        {/* Skip */}
-        <TouchableOpacity
-          style={styles.skip}
-          onPress={() => router.replace("/profile")}
-          activeOpacity={0.8}
-        >
+        <TouchableOpacity style={styles.skip} onPress={() => router.replace("/profile")} activeOpacity={0.8}>
           <Text style={styles.skipText}>Skip</Text>
         </TouchableOpacity>
 
-        {/* Kicker */}
-        <View style={styles.kickerWrap}>
-          <Text style={styles.kicker}>WELCOME</Text>
+        <View style={styles.kickerBadge}>
+          <Text style={styles.kickerText}>BASICS FIRST</Text>
         </View>
 
-        {/* Headline */}
-        <Text style={styles.h1}>
-          {line1}
-          {line1.length < full1.length ? "▍" : ""}
-        </Text>
+        <View style={styles.heroWrap}>
+          <Animated.View style={[styles.planetCardLeft, { transform: [{ translateY: floatA }] }]}>
+            <View style={[styles.planetDot, { backgroundColor: GOLD }]} />
+            <Text style={styles.planetText}>simple ideas</Text>
+          </Animated.View>
+          <Animated.View style={[styles.planetCardRight, { transform: [{ translateY: floatB }] }]}>
+            <View style={[styles.planetDot, { backgroundColor: SKY }]} />
+            <Text style={styles.planetText}>steady habits</Text>
+          </Animated.View>
 
-        {/* Body */}
-        <Text style={styles.p}>
-          {line2}
-          {line1.length === full1.length && line2.length < full2.length ? "▍" : ""}
-        </Text>
+          <View style={styles.constellation}>
+            <View style={[styles.star, styles.starA, { backgroundColor: GREEN }]} />
+            <View style={[styles.star, styles.starB, { backgroundColor: GOLD }]} />
+            <View style={[styles.star, styles.starC, { backgroundColor: CORAL }]} />
+          </View>
 
-        {/* Carousel reveal */}
+          <Text style={styles.h1}>
+            {line1}
+            {line1.length < full1.length ? "▍" : ""}
+          </Text>
+          <Text style={styles.p}>
+            {line2}
+            {line1.length === full1.length && line2.length < full2.length ? "▍" : ""}
+          </Text>
+        </View>
+
         <Animated.View
           style={[
             styles.revealWrap,
@@ -165,7 +150,7 @@ export default function WelcomeScreen() {
                 {
                   translateY: revealCard.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [10, 0],
+                    outputRange: [12, 0],
                   }),
                 },
               ],
@@ -173,17 +158,43 @@ export default function WelcomeScreen() {
           ]}
         >
           <View style={styles.card}>
-            <Text style={styles.label}>Start with something familiar:</Text>
-            <Animated.Text style={[styles.word, { opacity: wordFade }]}>
-              {brands[idx]}
-            </Animated.Text>
-            <Text style={styles.sub}>
-              The brands you love are the best place to start learning.
-            </Text>
+            <View style={styles.cardTop}>
+              <Text style={styles.label}>HOW IT FEELS</Text>
+              <View style={styles.orbitRow}>
+                <View style={[styles.orbitDot, { backgroundColor: GREEN }]} />
+                <View style={[styles.orbitDot, { backgroundColor: GOLD }]} />
+                <View style={[styles.orbitDot, { backgroundColor: SKY }]} />
+              </View>
+            </View>
+
+            <View style={styles.featureRow}>
+              <View style={styles.featureOrb}>
+                <View style={[styles.featureCore, { backgroundColor: GREEN }]} />
+              </View>
+              <View style={styles.featureOrb}>
+                <View style={[styles.featureCore, { backgroundColor: GOLD }]} />
+              </View>
+              <View style={styles.featureOrb}>
+                <View style={[styles.featureCore, { backgroundColor: SKY }]} />
+              </View>
+            </View>
+
+            <Text style={styles.word}>Learn. Play. Grow.</Text>
+            <Text style={styles.sub}>Clear basics, steady habits, growing confidence.</Text>
+
+            <View style={styles.tileRow}>
+              <View style={styles.tile}>
+                <Text style={styles.tileTitle}>Learn the basics</Text>
+                <Text style={styles.tileText}>Start with what investing is.</Text>
+              </View>
+              <View style={styles.tile}>
+                <Text style={styles.tileTitle}>Stay steady</Text>
+                <Text style={styles.tileText}>Less pressure, more progress.</Text>
+              </View>
+            </View>
           </View>
         </Animated.View>
 
-        {/* CTA reveal (delayed) */}
         <Animated.View
           style={[
             {
@@ -192,18 +203,14 @@ export default function WelcomeScreen() {
                 {
                   translateY: revealCTA.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [8, 0],
+                    outputRange: [10, 0],
                   }),
                 },
               ],
             },
           ]}
         >
-          <TouchableOpacity
-            activeOpacity={0.9}
-            style={styles.primary}
-            onPress={() => router.push("/profile")}
-          >
+          <TouchableOpacity activeOpacity={0.9} style={styles.primary} onPress={() => router.push("/profile")}>
             <Text style={styles.primaryText}>Get started</Text>
           </TouchableOpacity>
         </Animated.View>
@@ -219,60 +226,226 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 18,
   },
-  content: { flex: 1 },
-
-  kickerWrap: { marginTop: 22 },
-  kicker: {
-    color: "rgba(126,214,165,0.9)",
-    fontWeight: "900",
-    fontSize: 12,
-    letterSpacing: 1.1,
+  content: {
+    flex: 1,
   },
-
-  skip: { position: "absolute", top: 18, right: 0, padding: 10 },
-  skipText: { color: "rgba(203,213,225,0.85)", fontWeight: "800" },
-
+  skip: {
+    position: "absolute",
+    top: 18,
+    right: 0,
+    padding: 10,
+  },
+  skipText: {
+    color: "rgba(203,213,225,0.86)",
+    fontWeight: "800",
+  },
+  kickerBadge: {
+    alignSelf: "flex-start",
+    marginTop: 24,
+    marginBottom: 14,
+    borderRadius: 999,
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+    backgroundColor: "rgba(255,255,255,0.07)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.10)",
+  },
+  kickerText: {
+    color: GREEN,
+    fontWeight: "900",
+    fontSize: 11,
+    letterSpacing: 1,
+  },
+  heroWrap: {
+    marginTop: 10,
+    marginBottom: 18,
+    minHeight: 270,
+    justifyContent: "center",
+  },
+  planetCardLeft: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    borderRadius: 18,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: "rgba(255,255,255,0.07)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.10)",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  planetCardRight: {
+    position: "absolute",
+    top: 40,
+    right: 0,
+    borderRadius: 18,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: "rgba(255,255,255,0.07)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.10)",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  planetDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 999,
+  },
+  planetText: {
+    color: WHITE,
+    fontWeight: "800",
+    fontSize: 13,
+  },
+  constellation: {
+    position: "absolute",
+    top: 66,
+    left: "42%",
+    width: 80,
+    height: 40,
+  },
+  star: {
+    position: "absolute",
+    borderRadius: 999,
+  },
+  starA: {
+    width: 12,
+    height: 12,
+    top: 0,
+    left: 0,
+  },
+  starB: {
+    width: 8,
+    height: 8,
+    top: 18,
+    left: 28,
+  },
+  starC: {
+    width: 10,
+    height: 10,
+    top: 6,
+    left: 54,
+  },
   h1: {
     color: WHITE,
     fontSize: 40,
     fontWeight: "900",
-    letterSpacing: -0.2,
-    marginTop: 10,
     lineHeight: 44,
+    letterSpacing: -0.5,
+    marginTop: 74,
+    marginBottom: 14,
   },
-
-  p: { color: MUTED, fontSize: 15, lineHeight: 21, marginTop: 14, maxWidth: 520 },
-
-  revealWrap: { marginTop: 22, gap: 12 },
-
+  p: {
+    color: MUTED,
+    fontSize: 15,
+    lineHeight: 22,
+    maxWidth: 560,
+    fontWeight: "700",
+  },
+  revealWrap: {
+    gap: 14,
+  },
   card: {
     borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: "rgba(255,255,255,0.06)",
-    borderRadius: 18,
-    padding: 16,
+    borderColor: "rgba(255,255,255,0.10)",
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderRadius: 28,
+    padding: 18,
+  },
+  cardTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
   },
   label: {
-    color: "rgba(203,213,225,0.9)",
+    color: "rgba(203,213,225,0.88)",
     fontWeight: "900",
-    fontSize: 12,
-    letterSpacing: 0.6,
+    fontSize: 11,
+    letterSpacing: 0.9,
     textTransform: "uppercase",
   },
-  word: { color: WHITE, fontSize: 28, fontWeight: "900", marginTop: 10 },
-  sub: {
-    color: "rgba(203,213,225,0.85)",
-    marginTop: 8,
-    fontWeight: "700",
-    lineHeight: 20,
+  orbitRow: {
+    flexDirection: "row",
+    gap: 6,
   },
-
+  orbitDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 999,
+  },
+  word: {
+    color: WHITE,
+    fontSize: 30,
+    fontWeight: "900",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  sub: {
+    color: "rgba(203,213,225,0.86)",
+    fontWeight: "700",
+    lineHeight: 22,
+    marginBottom: 14,
+    textAlign: "center",
+  },
+  featureRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 14,
+    marginBottom: 14,
+  },
+  featureOrb: {
+    width: 52,
+    height: 52,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  featureCore: {
+    width: 18,
+    height: 18,
+    borderRadius: 999,
+  },
+  tileRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  tile: {
+    flex: 1,
+    borderRadius: 18,
+    padding: 12,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+  },
+  tileTitle: {
+    color: WHITE,
+    fontSize: 15,
+    fontWeight: "900",
+    marginBottom: 4,
+  },
+  tileText: {
+    color: MUTED,
+    fontSize: 13,
+    lineHeight: 19,
+    fontWeight: "700",
+  },
   primary: {
     backgroundColor: GREEN,
-    paddingVertical: 12,
-    borderRadius: 14,
+    paddingVertical: 15,
+    borderRadius: 18,
     alignItems: "center",
-    marginTop: 12, // little spacing after card
+    marginTop: 14,
   },
-  primaryText: { color: NAVY, fontWeight: "900", fontSize: 16 },
+  primaryText: {
+    color: NAVY,
+    fontWeight: "900",
+    fontSize: 17,
+  },
 });

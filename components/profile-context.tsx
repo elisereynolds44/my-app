@@ -1,13 +1,8 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 
-import { loadStoredProfile, saveStoredProfile } from "@/lib/profile-storage";
-
-export type CharacterOption = {
-  accent: string;
-  emoji: string;
-  id: string;
-  label: string;
-};
+import { CHARACTER_OPTIONS, CharacterOption, normalizeCharacterId } from "@/lib/character-options";
+import { clearLocalProgressValues, clearProgressValuesForEmail } from "@/lib/progress-storage";
+import { clearStoredProfile, loadStoredProfile, saveStoredProfile } from "@/lib/profile-storage";
 
 export type ProfileData = {
   characterId: string;
@@ -18,33 +13,12 @@ export type ProfileData = {
 
 type ProfileContextValue = {
   characterOptions: CharacterOption[];
-  completeProfile: (profile: Omit<ProfileData, "currentModuleId">) => void;
+  completeProfile: (profile: Omit<ProfileData, "currentModuleId">) => Promise<void>;
   isHydrated: boolean;
+  logOutProfile: () => Promise<void>;
   profile: ProfileData | null;
   selectedCharacter: CharacterOption | null;
 };
-
-const CHARACTER_OPTIONS: CharacterOption[] = [
-  { id: "alligator", label: "Alligator", emoji: "🐊", accent: "#34D399" },
-  { id: "bear", label: "Bear", emoji: "🐻", accent: "#B45309" },
-  { id: "bunny", label: "Bunny", emoji: "🐰", accent: "#F9A8D4" },
-  { id: "cat", label: "Cat", emoji: "🐱", accent: "#F59E0B" },
-  { id: "dolphin", label: "Dolphin", emoji: "🐬", accent: "#60A5FA" },
-  { id: "elephant", label: "Elephant", emoji: "🐘", accent: "#A78BFA" },
-  { id: "fox", label: "Fox", emoji: "🦊", accent: "#FB923C" },
-  { id: "frog", label: "Frog", emoji: "🐸", accent: "#22C55E" },
-  { id: "hamster", label: "Hamster", emoji: "🐹", accent: "#FDBA74" },
-  { id: "hedgehog", label: "Hedgehog", emoji: "🦔", accent: "#A16207" },
-  { id: "koala", label: "Koala", emoji: "🐨", accent: "#94A3B8" },
-  { id: "lion", label: "Lion", emoji: "🦁", accent: "#FACC15" },
-  { id: "octopus", label: "Octopus", emoji: "🐙", accent: "#FB7185" },
-  { id: "otter", label: "Otter", emoji: "🦦", accent: "#C084FC" },
-  { id: "penguin", label: "Penguin", emoji: "🐧", accent: "#F472B6" },
-  { id: "raccoon", label: "Raccoon", emoji: "🦝", accent: "#64748B" },
-  { id: "sloth", label: "Sloth", emoji: "🦥", accent: "#CA8A04" },
-  { id: "tiger", label: "Tiger", emoji: "🐯", accent: "#F97316" },
-  { id: "whale", label: "Whale", emoji: "🐋", accent: "#0EA5E9" },
-];
 
 const ProfileContext = createContext<ProfileContextValue | undefined>(undefined);
 
@@ -74,21 +48,60 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo<ProfileContextValue>(() => {
+    const normalizedCharacterId = normalizeCharacterId(profile?.characterId);
     const selectedCharacter =
-      CHARACTER_OPTIONS.find((character) => character.id === profile?.characterId) ?? null;
+      CHARACTER_OPTIONS.find((character) => character.id === normalizedCharacterId) ?? null;
 
     return {
       characterOptions: CHARACTER_OPTIONS,
-      completeProfile: (nextProfile) => {
+      completeProfile: async (nextProfile) => {
+        const normalizedEmail = nextProfile.email.trim().toLowerCase();
         const completeData: ProfileData = {
           ...nextProfile,
+          characterId: normalizeCharacterId(nextProfile.characterId),
           currentModuleId: "lesson-1",
+          email: normalizedEmail,
         };
 
         setProfile(completeData);
-        void saveStoredProfile(completeData);
+        const previousEmail = profile?.email?.trim().toLowerCase() ?? null;
+        const isFreshProfile = !profile;
+        const switchedAccount = previousEmail !== null && previousEmail !== normalizedEmail;
+
+        if (isFreshProfile || switchedAccount) {
+          const lessonKeys = Array.from({ length: 10 }, (_, index) => `completedLesson${index + 1}`);
+          const gameKeys = Array.from({ length: 10 }, (_, index) => `completedGame${index + 1}`);
+          const slideKeys = Array.from({ length: 10 }, (_, index) => `lesson${index + 1}SlideIndex`);
+
+          await clearProgressValuesForEmail([
+            ...lessonKeys,
+            ...gameKeys,
+            ...slideKeys,
+            "completedSimulation1",
+            "lesson1Brand",
+            "lesson1LastBrand",
+          ], normalizedEmail);
+        }
+
+        await saveStoredProfile(completeData);
       },
       isHydrated,
+      logOutProfile: async () => {
+        const lessonKeys = Array.from({ length: 10 }, (_, index) => `completedLesson${index + 1}`);
+        const gameKeys = Array.from({ length: 10 }, (_, index) => `completedGame${index + 1}`);
+        const slideKeys = Array.from({ length: 10 }, (_, index) => `lesson${index + 1}SlideIndex`);
+
+        await clearLocalProgressValues([
+          ...lessonKeys,
+          ...gameKeys,
+          ...slideKeys,
+          "completedSimulation1",
+          "lesson1Brand",
+          "lesson1LastBrand",
+        ]);
+        await clearStoredProfile();
+        setProfile(null);
+      },
       profile,
       selectedCharacter,
     };

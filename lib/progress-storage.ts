@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 
 import { getFirebaseFirestore } from "@/lib/firebase";
-import { getStoredProfileOwnerKey } from "@/lib/profile-storage";
+import { getProfileKey, getStoredProfileOwnerKey } from "@/lib/profile-storage";
 
 export type ProgressSnapshot = Record<string, string>;
 
@@ -70,6 +70,20 @@ async function saveRemoteProgress(values: ProgressSnapshot) {
   }
 }
 
+async function saveRemoteProgressForOwner(ownerKey: string | null, values: ProgressSnapshot) {
+  const database = getFirebaseFirestore();
+
+  if (!database || !ownerKey) {
+    return;
+  }
+
+  try {
+    await setDoc(doc(database, "progress", ownerKey), values, { merge: true });
+  } catch (error) {
+    console.warn("Could not save Firebase progress.", error);
+  }
+}
+
 export async function getProgressValue(key: string) {
   const browserValue = getLocalProgressValue(key);
   if (browserValue !== null) {
@@ -95,6 +109,28 @@ export async function removeProgressValue(key: string) {
   removeLocalProgressValue(key);
   await AsyncStorage.removeItem(key);
   await saveRemoteProgress({ [key]: "" });
+}
+
+export async function clearProgressValues(keys: string[]) {
+  await Promise.all(keys.map((key) => AsyncStorage.removeItem(key)));
+  keys.forEach(removeLocalProgressValue);
+  await saveRemoteProgress(
+    Object.fromEntries(keys.map((key) => [key, ""])) as ProgressSnapshot
+  );
+}
+
+export async function clearProgressValuesForEmail(keys: string[], email: string) {
+  await Promise.all(keys.map((key) => AsyncStorage.removeItem(key)));
+  keys.forEach(removeLocalProgressValue);
+  await saveRemoteProgressForOwner(
+    getProfileKey(email),
+    Object.fromEntries(keys.map((key) => [key, ""])) as ProgressSnapshot
+  );
+}
+
+export async function clearLocalProgressValues(keys: string[]) {
+  await Promise.all(keys.map((key) => AsyncStorage.removeItem(key)));
+  keys.forEach(removeLocalProgressValue);
 }
 
 export async function getProgressValues(keys: string[]) {

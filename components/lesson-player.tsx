@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+import { AppBackdrop } from "@/components/app-backdrop";
 import { LESSON_LIBRARY, LessonChoice } from "@/lib/lesson-content";
 import { getProgressValue, removeProgressValue, setProgressValue } from "@/lib/progress-storage";
 
@@ -102,11 +103,12 @@ export function LessonPlayer({ lessonNumber }: Props) {
     await setProgressValue(lesson.completionKey, "true");
     await AsyncStorage.removeItem(indexKey);
     await removeProgressValue(indexKey);
-    router.replace("/roadmap");
+    router.replace(`/game-${lessonNumber}` as any);
   };
 
   return (
     <SafeAreaView style={styles.container}>
+      <AppBackdrop accent={GREEN} />
       <View style={styles.topRow}>
         <TouchableOpacity
           onPress={async () => {
@@ -405,7 +407,7 @@ export function LessonPlayer({ lessonNumber }: Props) {
           </TouchableOpacity>
         ) : (
           <TouchableOpacity onPress={completeLesson} style={styles.primaryBtn}>
-            <Text style={styles.primaryText}>Complete lesson</Text>
+            <Text style={styles.primaryText}>Play lesson game</Text>
           </TouchableOpacity>
         )}
       </View>

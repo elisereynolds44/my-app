@@ -19,6 +19,16 @@ export default function RootLayout() {
         <Stack.Screen name="lesson-8" />
         <Stack.Screen name="lesson-9" />
         <Stack.Screen name="lesson-10" />
+        <Stack.Screen name="game-1" />
+        <Stack.Screen name="game-2" />
+        <Stack.Screen name="game-3" />
+        <Stack.Screen name="game-4" />
+        <Stack.Screen name="game-5" />
+        <Stack.Screen name="game-6" />
+        <Stack.Screen name="game-7" />
+        <Stack.Screen name="game-8" />
+        <Stack.Screen name="game-9" />
+        <Stack.Screen name="game-10" />
         <Stack.Screen name="simulation-1" />
         <Stack.Screen name="modal" options={{ presentation: "modal" }} />
       </Stack>

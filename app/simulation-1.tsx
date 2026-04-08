@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -745,7 +746,15 @@ export default function SimulationOneScreen() {
               { backgroundColor: selectedCharacter?.accent ?? "#1E293B" },
             ]}
           >
-            <Text style={styles.avatarEmoji}>{selectedCharacter?.emoji ?? "✨"}</Text>
+            {selectedCharacter ? (
+              <Image
+                source={selectedCharacter.imageSource}
+                style={styles.avatarImage}
+                contentFit="contain"
+              />
+            ) : (
+              <Text style={styles.avatarFallback}>?</Text>
+            )}
           </View>
 
           <View style={styles.heroCopy}>
@@ -926,7 +935,9 @@ export default function SimulationOneScreen() {
 
                 {result ? (
                   <View style={[styles.resultCard, { borderColor: sceneTone.border, backgroundColor: sceneTone.soft }]}>
-                    <Text style={styles.resultTitle}>{selectedCharacter?.emoji ?? "✨"} {result.reaction}</Text>
+                    <Text style={styles.resultTitle}>
+                      {selectedCharacter?.label ?? "Your character"}: {result.reaction}
+                    </Text>
                     <Text style={styles.resultText}>{result.explanation}</Text>
                     <Text style={[styles.resultPnl, roundPnl >= 0 ? styles.pnlUp : styles.pnlDown]}>
                       Portfolio move this round: {roundPnl >= 0 ? "+" : "-"}
@@ -995,7 +1006,7 @@ export default function SimulationOneScreen() {
             <Text style={styles.eventBody}>{ending.body}</Text>
             <View style={styles.resultCard}>
               <Text style={styles.resultTitle}>
-                {selectedCharacter?.emoji ?? "✨"} {selectedCharacter?.label ?? "Your character"} {getMood(stats)}.
+                {selectedCharacter?.label ?? "Your character"} {getMood(stats)}.
               </Text>
               <Text style={styles.resultText}>
                 You made it through the first investing story. The real win is that you now have more process than panic.
@@ -1095,8 +1106,14 @@ const styles = StyleSheet.create({
     borderWidth: 4,
     borderColor: "rgba(255,255,255,0.14)",
   },
-  avatarEmoji: {
-    fontSize: 38,
+  avatarImage: {
+    width: 72,
+    height: 72,
+  },
+  avatarFallback: {
+    fontSize: 34,
+    color: WHITE,
+    fontWeight: "800",
   },
   heroCopy: {
     flex: 1,
